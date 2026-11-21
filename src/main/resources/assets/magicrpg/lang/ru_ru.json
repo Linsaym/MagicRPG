@@ -1,0 +1,13 @@
+{
+  "tc.research_category.MAGICRPG_BEASTS": "Чудовищные твари",
+  "tc.research_name.MAGICRPG_ASH_HOUND": "Пепельный гончий",
+  "tc.research_text.MAGICRPG_ASH_HOUND": "Охотник, рождённый из углей",
+  "tc.research_page.MAGICRPG_ASH_HOUND.1": "Соедини уголь, кость и порох в печать на магическом верстаке. Чтобы призвать гончего, примени печать на верхней грани твёрдого блока, над которым есть свободное место.<BR>Гончий припадает к земле, рычит и сыплет искрами, а затем бросается вперёд. Уклонись в сторону и бей, пока он приходит в себя. После гибели гончий оставляет обугленный клык.",
+  "item.magicrpg.ash_hound_seal": "Печать призыва Пепельного гончего",
+  "item.magicrpg.ash_hound_seal.space": "Здесь слишком тесно для призыва Пепельного гончего.",
+  "item.magicrpg.ash_hound_seal.surface": "Для печати нужна доступная твёрдая поверхность.",
+  "item.magicrpg.ash_hound_seal.peaceful": "В мирном режиме Пепельный гончий не призывается.",
+  "item.magicrpg.ash_hound_seal.failed": "Печати не удалось призвать Пепельного гончего.",
+  "item.magicrpg.charred_fang": "Обугленный клык",
+  "entity.magicrpg.ash_hound": "Пепельный гончий"
+}

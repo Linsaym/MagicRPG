@@ -1,0 +1,13 @@
+{
+  "tc.research_category.MAGICRPG_BEASTS": "Monstrous Beasts",
+  "tc.research_name.MAGICRPG_ASH_HOUND": "Ash Hound",
+  "tc.research_text.MAGICRPG_ASH_HOUND": "A hunter born of embers",
+  "tc.research_page.MAGICRPG_ASH_HOUND.1": "Bind coal, bone and gunpowder into a seal at an Arcane Workbench. Use it on top of a solid block with room above to call an Ash Hound.<BR>The hound crouches, growls and sheds sparks before lunging in a straight line. Dodge sideways, then strike while it recovers. A slain hound leaves a Charred Fang.",
+  "item.magicrpg.ash_hound_seal": "Ash Hound Summoning Seal",
+  "item.magicrpg.ash_hound_seal.space": "There is too little room to summon an Ash Hound here.",
+  "item.magicrpg.ash_hound_seal.surface": "The seal needs a solid surface you can interact with.",
+  "item.magicrpg.ash_hound_seal.peaceful": "The seal cannot summon an Ash Hound in Peaceful mode.",
+  "item.magicrpg.ash_hound_seal.failed": "The seal failed to summon an Ash Hound.",
+  "item.magicrpg.charred_fang": "Charred Fang",
+  "entity.magicrpg.ash_hound": "Ash Hound"
+}

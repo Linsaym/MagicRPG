@@ -1,0 +1,43 @@
+# MagicRPG
+
+MagicRPG — отдельный аддон для Thaumcraft 4: Reforged 1.1.3 на Minecraft 26.3. В версии 0.1.0 есть раздел Таумономикона «Чудовищные твари», Пепельный гончий, печать призыва и обугленный клык.
+
+## Направление проекта
+
+MagicRPG расширяет Thaumcraft новыми мирами, монстрами, боссами и подземельями. Игрок исследует миры, готовит хорошее снаряжение и использует его для боёв с боссами и прохождения подземелий.
+
+## Сборка
+
+Установи **JDK 25** и укажи его в `JAVA_HOME`. Gradle отдельно устанавливать не нужно. Для сборки и запуска используются следующие JAR:
+
+- `thaumcraft-4-reforged-1.1.3-26.3.jar`
+- `TerraBlender-neoforge-26.3-26.3.0.0.9.jar`
+
+Gradle ищет эти файлы сначала в `libs/`, затем в каталоге из `-PprofileMods`. На Windows без этого параметра используется `%APPDATA%\.minecraft\mods`. Reforged и TerraBlender устанавливаются отдельно и не входят в артефакт MagicRPG.
+
+```powershell
+.\gradlew.bat build
+# Если моды хранятся в другом каталоге
+.\gradlew.bat build '-PprofileMods=D:\Minecraft\test-profile\mods'
+```
+
+На Linux и macOS используй `./gradlew` и положи JAR в `libs/` или передай `-PprofileMods`. Первая сборка загружает Gradle и зависимости, поэтому ей нужен доступ к сети. Результат — `build/libs/magicrpg-<версия>-26.3.jar`. Для установки положи его в `mods` вместе с Reforged и TerraBlender.
+
+## Локальная проверка
+
+| Команда на Windows | Каталог запуска |
+| --- | --- |
+| `.\gradlew.bat runClient` | `run/client/` |
+| `.\gradlew.bat runServer` | `run/server/` |
+
+При первом запуске выделенный сервер потребует принять Minecraft EULA в своём каталоге. Эти команды используют окружение разработки. Для проверки установочного JAR положи его в отдельный профиль или отдельный сервер с нужными зависимостями.
+
+Версия разработки — NeoForge `26.3.0.115`. Нижняя граница в метаданных Reforged 1.1.3 — `26.3.0.57-beta`. На ней проверялась компиляция MagicRPG 0.1.0. Игра запускалась на `26.3.0.115`, в том числе с Sodium и Horizon Iris.
+
+- [Релиз Reforged 1.1.3 для Minecraft 26.3](https://github.com/notlikethiss/thaumcraft-4-reforged/releases/tag/26.3)
+- [Исходники Reforged по тегу 26.3](https://github.com/notlikethiss/thaumcraft-4-reforged/tree/26.3)
+- [Инструкции для Codex](AGENTS.md)
+
+## Следующая задача
+
+[Лиловые луга](docs/lilac-meadows.md)

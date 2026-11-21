@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+group = 'io.github.magicrpg'
+version = '0.1.0'
+base.archivesName = 'magicrpg'
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+def profileMods = System.getenv('APPDATA') ? new File(System.getenv('APPDATA'), '.minecraft/mods') : file('libs')
+def dependencyJar = { String name ->
+    def local = file("libs/${name}")
+    local.isFile() ? local : new File(providers.gradleProperty('profileMods').getOrElse(profileMods.absolutePath), name)
+}
+
+dependencies {
+    implementation files(dependencyJar('thaumcraft-4-reforged-1.1.3-26.3.jar'))
+    runtimeOnly files(dependencyJar('TerraBlender-neoforge-26.3-26.3.0.0.9.jar'))
+}
+
+neoForge {
+    enable {
+        version = neo_version
+        disableRecompilation = true
+    }
+    runs {
+        client {
+            client()
+            gameDirectory = file('run/client')
+        }
+        server {
+            server()
+            gameDirectory = file('run/server')
+            programArgument '--nogui'
+        }
+    }
+    mods {
+        magicrpg { sourceSet sourceSets.main }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('processResources', ProcessResources) {
+    inputs.property('version', project.version)
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand(version: project.version)
+    }
+}
+
+tasks.named('jar', Jar) {
+    archiveFileName = "magicrpg-${project.version}-26.3.jar"
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
