@@ -22,6 +22,7 @@ import thaumcraft.registry.ModBlocks;
 
 public final class ReforgedIntegration {
     public static final String BEASTS_CATEGORY = "MAGICRPG_BEASTS";
+    public static final String ILLUSTRATION_PATH = "textures/gui/research/";
     private static final String ASH_HOUND_RESEARCH = "MAGICRPG_ASH_HOUND";
     static final String FANG_RESEARCH = "MAGICRPG_CHARRED_FANG";
     static final String MEADOWS_RESEARCH = "MAGICRPG_LILAC_MEADOWS";
@@ -48,6 +49,12 @@ public final class ReforgedIntegration {
                 .add(Aspect.FIRE, 2).add(Aspect.BEAST, 1).add(Aspect.MAGIC, 1));
             registry.register(MagicRpg.WHITE_STONE_ITEM.get(), new AspectList().add(Aspect.EARTH, 3).add(Aspect.ORDER, 1));
             registry.register(MagicRpg.LILAC_GRASS_ITEM.get(), new AspectList().add(Aspect.EARTH, 2).add(Aspect.PLANT, 1));
+            registry.register(MagicRpg.CHALK_HEART.get(), new AspectList().add(Aspect.EARTH, 4).add(Aspect.MAGIC, 2));
+            registry.register(MagicRpg.ECHO_RIVET.get(), new AspectList().add(Aspect.METAL, 3).add(Aspect.MOTION, 2));
+            registry.register(MagicRpg.OATH_CORE.get(), new AspectList().add(Aspect.MAGIC, 8).add(Aspect.ORDER, 6));
+            registry.register(MagicRpg.STAR_PRISM.get(), new AspectList().add(Aspect.LIGHT, 5).add(Aspect.ORDER, 3));
+            registry.register(MagicRpg.RESONANCE_COIL.get(), new AspectList().add(Aspect.METAL, 4).add(Aspect.ENERGY, 3));
+            registry.register(MagicRpg.CITY_SEAL.get(), new AspectList().add(Aspect.ORDER, 5).add(Aspect.METAL, 3));
             registry.registerEntity(MagicRpg.ASH_HOUND.get(), new AspectList()
                 .add(Aspect.BEAST, 4).add(Aspect.FIRE, 3).add(Aspect.ENTROPY, 2).add(Aspect.MOTION, 2));
         });
@@ -80,11 +87,12 @@ public final class ReforgedIntegration {
         new ResearchItem(FANG_RESEARCH, BEASTS_CATEGORY, new AspectList(), 4, 0, 1,
             TcStack.of("magicrpg:charred_fang"))
             .setParents(ASH_HOUND_RESEARCH)
-            .setPages(page(FANG_RESEARCH, 1))
+            .setPages(page(FANG_RESEARCH, 1), illustration("charred_fang"))
             .registerResearchItem();
 
         diary(MEADOWS_RESEARCH, "magicrpg:white_stone", FANG_RESEARCH, 6, -2, Aspect.EARTH, Aspect.ORDER,
-            page(MEADOWS_RESEARCH, 1), page(MEADOWS_RESEARCH, 2));
+            page(MEADOWS_RESEARCH, 1), page(MEADOWS_RESEARCH, 2),
+            page(MEADOWS_RESEARCH, 3), page(MEADOWS_RESEARCH, 4), page(MEADOWS_RESEARCH, 5));
         WayfarerMirrorMagic.registerResearchAndRecipes();
         GoldenwoodMagic.registerResearchAndRecipe();
     }
@@ -97,6 +105,10 @@ public final class ReforgedIntegration {
 
     static ResearchPage page(String key, int page) {
         return ResearchPage.text("tc.research_page." + key + "." + page);
+    }
+
+    static ResearchPage illustration(String name) {
+        return ResearchPage.image(MagicRpg.id(ILLUSTRATION_PATH + name + ".png").toString(), "");
     }
 
     public static void unlockFieldNotes(PlayerTickEvent.Post event) {

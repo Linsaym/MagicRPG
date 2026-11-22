@@ -8,11 +8,7 @@
           "type": "minecraft:item",
           "name": "magicrpg:amber_heart"
         }
-      ],
-      "condition": {
-        "type": "minecraft:random_chance",
-        "chance": 0.68
-      }
+      ]
     },
     {
       "rolls": 1,

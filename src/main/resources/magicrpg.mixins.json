@@ -2,7 +2,9 @@
   "required": true,
   "package": "io.github.magicrpg.compat.reforged.client.mixin",
   "client": [
-    "ResearchBackgroundMixin"
+    "ResearchBackgroundMixin",
+    "ResearchDisplayPageAccessor",
+    "ResearchIllustrationMixin"
   ],
   "injectors": {
     "defaultRequire": 1

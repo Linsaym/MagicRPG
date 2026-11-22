@@ -1,6 +1,7 @@
 package io.github.magicrpg.compat.reforged;
 
 import static io.github.magicrpg.compat.reforged.ReforgedIntegration.diary;
+import static io.github.magicrpg.compat.reforged.ReforgedIntegration.illustration;
 import static io.github.magicrpg.compat.reforged.ReforgedIntegration.page;
 
 import io.github.magicrpg.Goldenwood;
@@ -48,7 +49,7 @@ public final class GoldenwoodMagic {
         diary(ENTRY, "thaumcraft:amber_block", ReforgedIntegration.FANG_RESEARCH, 6, 2,
             Aspect.FIRE, Aspect.ORDER, page(ENTRY, 1), page(ENTRY, 2));
         diary(INHABITANTS, "magicrpg:golden_resin", ENTRY, 8, 0, Aspect.EARTH, Aspect.AIR, page(INHABITANTS, 1),
-            page(INHABITANTS, 2), page(INHABITANTS, 3));
+            page(INHABITANTS, 2), page(INHABITANTS, 3), illustration("honey_moth"));
         diary(RUINS, "magicrpg:amber_heart", ENTRY, 8, 2, Aspect.ORDER, Aspect.ENTROPY, page(RUINS, 1), page(RUINS, 2));
         for (var decoration : List.of("goldenwood_planks", "honeystone_bricks")) {
             var id = MagicRpg.id(decoration);

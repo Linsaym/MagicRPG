@@ -53,8 +53,8 @@ final class PortalLinks extends SavedData {
     static @Nullable TeleportTransition destination(ServerLevel source, ServerPlayer player, PortalFrame frame,
                                                     PortalRoute route) {
         var server = source.getServer();
-        var portals = server.overworld().getDataStorage().computeIfAbsent(
-            route == PortalRoute.GOLDENWOOD ? GOLDENWOOD_LINKS : MEADOW_LINKS);
+        var portals = forRoute(source, route);
+        boolean arrivingOnIsland = !source.dimension().equals(route.dimension());
         ServerLevel target;
         BlockPos exit;
         if (source.dimension().equals(route.dimension())) {
@@ -64,7 +64,7 @@ final class PortalLinks extends SavedData {
             }
             var origin = link.origin();
             target = server.getLevel(origin.dimension());
-            exit = target == null ? null : findExit(target, origin.frame(), player, route);
+            exit = target == null ? null : findExit(target, origin.frame(), player, route, false);
             if (exit == null) {
                 target = server.findRespawnDimension();
                 exit = findSurface(target, server.getRespawnData().pos(), player, 32);
@@ -75,81 +75,126 @@ final class PortalLinks extends SavedData {
                 return null;
             }
             var origin = new Origin(source.dimension(), frame);
-            var link = portals.byOrigin.get(origin);
-            if (link == null || !link.destination().isOpen(target, route)) {
-                var built = portals.buildArrival(target, frame.base(), route);
-                if (built == null) {
-                    return null;
-                }
-                link = new Link(origin, built);
-                portals.index(link);
-                portals.setDirty();
+            var link = portals.prepareIslandLink(target, origin, route);
+            if (link == null) {
+                return null;
             }
-            exit = findExit(target, link.destination(), player, route);
+            exit = findExit(target, link.destination(), player, route, arrivingOnIsland);
         }
         return exit == null ? null : new TeleportTransition(target, Vec3.atBottomCenterOf(exit), Vec3.ZERO,
-            player.getYRot(), player.getXRot(), TeleportTransition.PLAY_PORTAL_SOUND
+            arrivingOnIsland ? 180.0F : player.getYRot(), arrivingOnIsland ? 0.0F : player.getXRot(),
+            TeleportTransition.PLAY_PORTAL_SOUND
                 .then(TeleportTransition.PLACE_PORTAL_TICKET));
     }
 
-    private @Nullable PortalFrame buildArrival(ServerLevel level, BlockPos origin, PortalRoute route) {
-        var center = level.getWorldBorder().clampToBounds(origin);
-        PortalFrame waterside = null;
-        // Check spaced sites so two origins at the same coordinates never share a return arch.
-        for (var site : BlockPos.spiralAround(center, 10, Direction.EAST, Direction.SOUTH)) {
-            int x = center.getX() + (site.getX() - center.getX()) * 8;
-            int z = center.getZ() + (site.getZ() - center.getZ()) * 8;
-            var column = new BlockPos(x, 0, z);
-            if (!level.getWorldBorder().isWithinBounds(column)) {
-                continue;
+    private static PortalLinks forRoute(ServerLevel level, PortalRoute route) {
+        return level.getServer().overworld().getDataStorage().computeIfAbsent(
+            route == PortalRoute.GOLDENWOOD ? GOLDENWOOD_LINKS : MEADOW_LINKS);
+    }
+
+    static boolean prepareIslandArch(ServerLevel source, PortalFrame frame, ServerPlayer player, PortalRoute route) {
+        var target = source.getServer().getLevel(route.dimension());
+        if (target == null) {
+            return false;
+        }
+        var portals = forRoute(source, route);
+        var link = portals.prepareIslandLink(target, new Origin(source.dimension(), frame), route);
+        return link != null && findExit(target, link.destination(), player, route, true) != null;
+    }
+
+    private @Nullable Link prepareIslandLink(ServerLevel level, Origin origin, PortalRoute route) {
+        var previous = byOrigin.get(origin);
+        if (previous != null) {
+            var frame = previous.destination();
+            if (frame.isOpen(level, route)) {
+                return previous;
             }
-            var surface = surfaceAt(level, column);
-            var frame = new PortalFrame(surface, Direction.Axis.X);
-            if (byDestination.containsKey(frame)) {
-                continue;
-            }
-            var floor = level.getBlockState(surface.below());
-            if (route.isNaturalFloor(floor) && canBuild(level, surface, route, false)) {
-                return placeArrival(level, frame, route);
-            }
-            if (route == PortalRoute.GOLDENWOOD && waterside == null && floor.is(Blocks.WATER)
-                && canBuild(level, surface, route, true)) {
-                waterside = frame;
-            }
-            if (waterside != null && (Math.abs(site.getX() - center.getX()) >= 3
-                || Math.abs(site.getZ() - center.getZ()) >= 3)) {
-                break;
+            if (canBuild(level, frame, route, true)) {
+                placeArrival(level, frame, route);
+                return previous;
             }
         }
-        return waterside == null ? null : placeArrival(level, waterside, route);
+        // Keep the old return address until its replacement can be built.
+        boolean meadows = route == PortalRoute.MEADOWS;
+        int[] columns = meadows ? new int[]{0, -8, 8, -16, 16} : new int[]{0, -8, 8, -16, 16, -24, 24};
+        int firstZ = meadows ? AuthoredIsland.MEADOW_FIRST_ARCH_Z : AuthoredIsland.FIRST_ARCH_Z;
+        int y = meadows ? AuthoredIsland.MEADOW_ARRIVAL_Y : AuthoredIsland.ARRIVAL_Y;
+        for (int row = 0; row < (meadows ? 2 : 5); row++) {
+            int z = firstZ + row * 8;
+            for (int x : columns) {
+                var frame = new PortalFrame(new BlockPos(x, y, z), Direction.Axis.X);
+                var occupant = byDestination.get(frame);
+                if (!canBuild(level, frame, route, occupant != null)
+                    || (occupant != null && !isAbandoned(level, occupant, route))) {
+                    continue;
+                }
+                placeArrival(level, frame, route);
+                if (occupant != null) {
+                    byOrigin.remove(occupant.origin());
+                    byDestination.remove(frame);
+                }
+                var link = new Link(origin, frame);
+                index(link);
+                setDirty();
+                return link;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isAbandoned(ServerLevel island, Link link, PortalRoute route) {
+        if (link.destination().isOpen(island, route)) {
+            return false;
+        }
+        var origin = link.origin();
+        var source = island.getServer().getLevel(origin.dimension());
+        return source != null && !origin.frame().hasBricks(source, route);
     }
 
     private static PortalFrame placeArrival(ServerLevel level, PortalFrame frame, PortalRoute route) {
-        buildPlatform(level, frame.base(), route);
+        buildPlatform(level, frame, route);
         frame.build(level, route);
         return frame;
     }
 
-    private static boolean canBuild(ServerLevel level, BlockPos base, PortalRoute route, boolean onWater) {
-        for (var pos : BlockPos.betweenClosed(base.offset(-1, -1, -1), base.offset(2, 3, 1))) {
+    private static Iterable<BlockPos> arrivalSpace(PortalFrame frame) {
+        var base = frame.base();
+        return frame.axis() == Direction.Axis.X
+            ? BlockPos.betweenClosed(base.offset(-1, -1, -1), base.offset(2, 3, 1))
+            : BlockPos.betweenClosed(base.offset(-1, -1, -1), base.offset(1, 3, 2));
+    }
+
+    private static boolean canBuild(ServerLevel level, PortalFrame frame, PortalRoute route, boolean restore) {
+        var base = frame.base();
+        var border = restore ? frame.border() : List.<BlockPos>of();
+        var interior = restore ? frame.interior() : List.<BlockPos>of();
+        for (var pos : arrivalSpace(frame)) {
             if (!level.isInsideBuildHeight(pos) || !level.getWorldBorder().isWithinBounds(pos)) {
                 return false;
             }
             var state = level.getBlockState(pos);
             boolean foundation = pos.getY() == base.getY() - 1;
-            boolean clear = foundation
-                ? route.isNaturalFloor(state) || (onWater && state.is(Blocks.WATER))
-                : route.canClear(state);
-            if (!state.isAir() && !clear) {
-                return false;
+            if (foundation) {
+                if (route.isNaturalFloor(state)
+                    || (route == PortalRoute.GOLDENWOOD && state.is(route.platform()))) {
+                    continue;
+                }
+            } else if (state.isAir() || route.canClear(state)
+                || (restore && state.is(route.portal()) && interior.contains(pos))) {
+                continue;
             }
+            if (restore && border.contains(pos)
+                && (state.is(route.frameBlock()) || state.is(route.arrivalFrameBlock()))) {
+                continue;
+            }
+            return false;
         }
         return true;
     }
 
-    private static void buildPlatform(ServerLevel level, BlockPos base, PortalRoute route) {
-        for (var pos : BlockPos.betweenClosed(base.offset(-1, -1, -1), base.offset(2, 3, 1))) {
-            if (pos.getY() == base.getY() - 1) {
+    private static void buildPlatform(ServerLevel level, PortalFrame frame, PortalRoute route) {
+        for (var pos : arrivalSpace(frame)) {
+            if (pos.getY() == frame.base().getY() - 1) {
                 level.setBlock(pos, route.platform().defaultBlockState(), Block.UPDATE_ALL);
             } else if (!level.isEmptyBlock(pos) && route.canClear(level.getBlockState(pos))) {
                 level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
@@ -157,9 +202,11 @@ final class PortalLinks extends SavedData {
         }
     }
 
-    private static @Nullable BlockPos findExit(ServerLevel level, PortalFrame frame, ServerPlayer player, PortalRoute route) {
+    private static @Nullable BlockPos findExit(ServerLevel level, PortalFrame frame, ServerPlayer player,
+                                               PortalRoute route, boolean preferNorth) {
         if (frame.isOpen(level, route)) {
-            for (var pos : frame.exits()) {
+            var exits = frame.exits();
+            for (var pos : preferNorth ? exits.reversed() : exits) {
                 if (isSafe(level, pos, player)) {
                     return pos;
                 }

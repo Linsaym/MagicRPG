@@ -3,10 +3,10 @@
   "attributes": {
     "minecraft:visual/sky_color": "#d58b62",
     "minecraft:visual/fog_color": "#d9a773",
-    "minecraft:visual/fog_start_distance": 38.0,
-    "minecraft:visual/fog_end_distance": 132.0,
+    "minecraft:visual/fog_start_distance": 128.0,
+    "minecraft:visual/fog_end_distance": 340.0,
     "minecraft:visual/cloud_color": "#9af6c583",
-    "minecraft:visual/cloud_height": 142.0,
+    "minecraft:visual/cloud_height": 49.0,
     "minecraft:visual/sun_angle": 86.0,
     "minecraft:visual/moon_angle": 266.0,
     "minecraft:visual/star_brightness": 0.0,

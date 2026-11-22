@@ -2,8 +2,7 @@
 
 ## Источники и проверка сигнатур
 
-- Проверяй `thaumcraft.*` на локальном JAR, который использует сборка. Для поиска классов и ресурсов используй `jar tf`, для просмотра сигнатур — `javap`, для просмотра поведения — `javap -p -c`. Если этих данных мало, сверься с [исходниками тега `26.3`](https://github.com/notlikethiss/thaumcraft-4-reforged/tree/26.3). У старых Thaumcraft и других портов отличаются пакеты и методы. [Релиз Reforged 1.1.3](https://github.com/notlikethiss/thaumcraft-4-reforged/releases/tag/26.3)
-- Для Minecraft и NeoForge проверяй сигнатуры в зависимостях ModDevGradle из текущего проекта. Публичные примеры для другой версии годятся для понимания механизма, их импорты и сигнатуры нужно сверять с 26.3.
+Проверяй сигнатуры в JAR, с которыми собирается проект. Для поиска классов и ресурсов используй `jar tf`, для сигнатур — `javap`, для поведения — `javap -p -c`. Если локального Reforged недостаточно, см. [исходники тега `26.3`](https://github.com/notlikethiss/thaumcraft-4-reforged/tree/26.3).
 
 Из корня проекта в PowerShell, с JDK 25 в `JAVA_HOME`:
 
@@ -15,29 +14,28 @@ if (!(Test-Path -LiteralPath $tc)) {
 # Если сборка использует -PprofileMods, укажи тот же путь к JAR в $tc.
 & "$env:JAVA_HOME/bin/javap.exe" -classpath $tc thaumcraft.research.ResearchCategories thaumcraft.crafting.TcRecipes thaumcraft.aspect.AspectSync
 
-.\gradlew.bat createMinecraftArtifacts
-$mc = 'build/moddev/artifacts/minecraft-patched-26.3.0.115.jar'
-# Если изменился neo_version, укажи соответствующий JAR в $mc.
+$neoVersion = (Get-Content -Raw gradle.properties | ConvertFrom-StringData).neo_version
+$mc = "build/moddev/artifacts/minecraft-patched-$neoVersion.jar"
+if (!(Test-Path -LiteralPath $mc)) {
+    .\gradlew.bat createMinecraftArtifacts
+    if ($LASTEXITCODE -ne 0) { throw 'Не удалось подготовить JAR Minecraft' }
+}
 & "$env:JAVA_HOME/bin/javap.exe" -classpath $mc net.minecraft.world.level.block.Portal net.minecraft.world.level.portal.TeleportTransition net.minecraft.world.level.saveddata.SavedDataType net.minecraft.world.level.storage.SavedDataStorage
 ```
 
 ## Reforged 1.1.3
 
-Рабочий пример регистрации исследования, рецепта и аспектов находится в [ReforgedIntegration.java](../src/main/java/io/github/magicrpg/compat/reforged/ReforgedIntegration.java). Остальной код MagicRPG обращается к этому пакету за интеграцией с Reforged.
-
-| Задача | Точка входа |
+| Задача | API и пример |
 | --- | --- |
-| Вкладка Таумономикона | `thaumcraft.research.ResearchCategories.registerCategory(key, icon, background)` принимает ключ вкладки и два `Identifier` с путями к текстурам. Имя задаёт перевод `tc.research_category.<key>`. |
-| Исследование | `ResearchItem` с ключом вкладки, `setPages(...)`, `registerResearchItem()`. Имя и подпись читаются из `tc.research_name.<key>` и `tc.research_text.<key>`. `ResearchPage.text(...)` принимает ключ перевода. `setSecondary()` позволяет купить исследование за очки аспектов при стандартной сложности исследований. |
-| Магический верстак | `thaumcraft.crafting.TcRecipes.register(new ShapelessArcaneRecipe(key, research, result, aspects, ingredients))`. `research` совпадает с ключом исследования, а `ResearchPage.arcane(key)` ссылается на ключ рецепта. Результат и ингредиенты задаются через `TcStack` и `TcIngredient`. |
-| Аспекты для сканирования | `thaumcraft.aspect.AspectSync.addRegistrar(registry -> ...)`. Используй `registry.register(item, aspects)` и `registry.registerEntity(type, aspects)`. Reforged вызывает обработчик при перестроении таблиц аспектов и синхронизирует их с клиентом. |
-| Магические каменные кирпичи | `thaumcraft.registry.ModBlocks.ARCANE_STONE_BRICKS.get()` возвращает блок `thaumcraft:arcane_stone_bricks`. Для проверки рамы используй блок через интеграцию Reforged. |
+| Вкладка и исследования | `ResearchCategories.registerCategory`, `ResearchItem.setParents`, `ResearchPage.text`. Регистрация через `FMLCommonSetupEvent.enqueueWork` в [ReforgedIntegration.java](../src/main/java/io/github/magicrpg/compat/reforged/ReforgedIntegration.java#L42). |
+| Магический верстак | `ShapelessArcaneRecipe` и `ResearchPage.arcane). [Печать гончего](../src/main/java/io/github/magicrpg/compat/reforged/ReforgedIntegration.java#L60). |
+| Инфузия | `InfusionRecipe` и `ResearchPage.infusion`. [Кольцо Златолесья](../src/main/java/io/github/magicrpg/compat/reforged/GoldenwoodMagic.java#L60). |
+| Обычный рецепт на странице | `CraftingRecipeRef` и `ResearchPage.crafting`. [Материалы Златолесья](../src/main/java/io/github/magicrpg/compat/reforged/GoldenwoodMagic.java#L53). |
+| Аспекты | `AspectSync.addRegistrar`, затем `registry.register` для предметов или `registry.registerEntity` для мобов. [Регистрация аспектов Златолесья](../src/main/java/io/github/magicrpg/compat/reforged/GoldenwoodMagic.java#L77). |
 
-Исследования и рецепты регистрируются в очереди `FMLCommonSetupEvent.enqueueWork(...)`. Цена рецепта задаётся в целых единицах вис: `Aspect.FIRE` — Ignis, `Aspect.ENTROPY` — Perditio. Верстак проверяет исследование и вис, применяет модификаторы жезла и списывает вис при взятии результата. Для проверки точной цены используй жезл с нейтральным модификатором. Для проверки сканирования убедись, что игрок уже знает составные части сложных аспектов.
-
-В Reforged магическое зеркало `thaumcraft:magic_mirror` переносит выброшенные предметы. `thaumcraft.device.MirrorBlock#entityInside` передаёт `ItemEntity` в `MirrorBlockEntity#transport`. Зеркало эссенции `thaumcraft:essentia_mirror` работает с эссенцией через `EssentiaMirrorBlockEntity`. Переход игроков в MagicRPG реализован отдельно в [LinkedPortalBlock.java](../src/main/java/io/github/magicrpg/world/LinkedPortalBlock.java).
+Магическое зеркало Reforged переносит выброшенные предметы. Переход игрока через путевое зеркало MagicRPG реализован в [WayfarerMirrorBlock.java](../src/main/java/io/github/magicrpg/world/WayfarerMirrorBlock.java#L161).
 
 ## Порталы и сохранение в 26.3
 
-- `net.minecraft.world.level.block.Portal` определяет `getPortalDestination(ServerLevel, Entity, BlockPos)`. В блоке регистрируй вход через `Entity.setAsInsidePortal(...)`, проверяй возможность прохода на сервере и возвращай `TeleportTransition` только при безопасной точке назначения.
-- `ServerLevel.getDataStorage()` возвращает `net.minecraft.world.level.storage.SavedDataStorage`. Связи порталов между измерениями можно хранить в одном `SavedData` через хранилище обычного мира. `SavedDataType` использует `Identifier`, фабрику и `Codec`. Храни ключи измерений и координаты, помечай изменённые данные через `setDirty()` и проверяй загрузку после перезапуска. [Справочник NeoForge по SavedData](https://docs.neoforged.net/docs/datastorage/saveddata/)
+- `Portal.getPortalDestination(ServerLevel, Entity, BlockPos)` возвращает `TeleportTransition` для безопасной точки выхода. Вход регистрируется через `Entity.setAsInsidePortal`. [LinkedPortalBlock.java](../src/main/java/io/github/magicrpg/world/LinkedPortalBlock.java)
+- `SavedDataType` связывает идентификатор, фабрику и `Codec`. Связи арок хранятся в обычном мире через `SavedDataStorage.computeIfAbsent`. После изменения данных вызывается `setDirty()`. [PortalLinks.java](../src/main/java/io/github/magicrpg/world/PortalLinks.java)

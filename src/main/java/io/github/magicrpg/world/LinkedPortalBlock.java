@@ -37,10 +37,14 @@ public final class LinkedPortalBlock extends Block implements Portal {
         registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.X));
     }
 
-    public boolean activate(ServerLevel level, BlockPos clicked, ServerPlayer player) {
+    public enum Activation {
+        OPENED, INVALID_FRAME, LANDING_FULL
+    }
+
+    public Activation activate(ServerLevel level, BlockPos clicked, ServerPlayer player) {
         if (level.dimension().equals(route.dimension()) || level.getServer().getLevel(route.dimension()) == null
             || !level.mayInteract(player, clicked)) {
-            return false;
+            return Activation.INVALID_FRAME;
         }
         for (var axis : PortalFrame.AXES) {
             for (var offset : PortalFrame.BORDER) {
@@ -48,12 +52,15 @@ public final class LinkedPortalBlock extends Block implements Portal {
                     .below(offset.getY()), axis);
                 if (frame.hasBricks(level, route) && frame.interior().stream()
                     .allMatch(pos -> level.isEmptyBlock(pos) && level.mayInteract(player, pos))) {
+                    if (!PortalLinks.prepareIslandArch(level, frame, player, route)) {
+                        return Activation.LANDING_FULL;
+                    }
                     frame.open(level, route);
-                    return true;
+                    return Activation.OPENED;
                 }
             }
         }
-        return false;
+        return Activation.INVALID_FRAME;
     }
 
     @Override

@@ -7,6 +7,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 
 record PortalFrame(BlockPos base, Direction.Axis axis) {
     static final Codec<PortalFrame> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -58,18 +59,28 @@ record PortalFrame(BlockPos base, Direction.Axis axis) {
         return positions(INTERIOR);
     }
 
+    List<BlockPos> border() {
+        return positions(BORDER);
+    }
+
     boolean hasBricks(ServerLevel level, PortalRoute route) {
-        var brick = route.frameBlock();
-        return positions(BORDER).stream().allMatch(pos -> level.getBlockState(pos).is(brick));
+        return hasBricks(level, route.frameBlock());
+    }
+
+    private boolean hasBricks(ServerLevel level, Block brick) {
+        return border().stream().allMatch(pos -> level.getBlockState(pos).is(brick));
     }
 
     boolean isOpen(ServerLevel level, PortalRoute route) {
-        return hasBricks(level, route) && interior().stream().allMatch(pos -> isPortal(level, pos, axis, route));
+        boolean complete = hasBricks(level, route)
+            || (route == PortalRoute.GOLDENWOOD && level.dimension().equals(route.dimension())
+                && hasBricks(level, route.arrivalFrameBlock()));
+        return complete && interior().stream().allMatch(pos -> isPortal(level, pos, axis, route));
     }
 
     void build(ServerLevel level, PortalRoute route) {
-        var brick = route.frameBlock().defaultBlockState();
-        for (var pos : positions(BORDER)) {
+        var brick = route.arrivalFrameBlock().defaultBlockState();
+        for (var pos : border()) {
             level.setBlockAndUpdate(pos, brick);
         }
         open(level, route);

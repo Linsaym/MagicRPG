@@ -19,6 +19,10 @@ public final class ClientRegistration {
         }
         event.registerLayerDefinition(AshHoundModel.LAYER, AshHoundModel::createLayer);
         event.registerLayerDefinition(StarHareModel.LAYER, StarHareModel::createLayer);
+        event.registerLayerDefinition(PaladinModel.LAYER, PaladinModel::createLayer);
+        for (var shape : CitySentryModel.Shape.values()) {
+            event.registerLayerDefinition(shape.layer, () -> CitySentryModel.createLayer(shape));
+        }
         event.registerLayerDefinition(ChalkGuardianModel.LAYER, ChalkGuardianModel::createLayer);
     }
 
@@ -37,6 +41,13 @@ public final class ClientRegistration {
         event.registerEntityRenderer(Goldenwood.BOLT.get(), context -> new ThrownItemRenderer<>(context, 0.65F, true));
         event.registerEntityRenderer(MagicRpg.ASH_HOUND.get(), AshHoundRenderer::new);
         event.registerEntityRenderer(MagicRpg.STAR_HARE.get(), StarHareRenderer::new);
+        event.registerEntityRenderer(MagicRpg.MEADOW_PALADIN.get(), PaladinRenderer::new);
+        event.registerEntityRenderer(MagicRpg.CITY_STONE_GUARD.get(),
+            context -> new CitySentryRenderer(context, CitySentryModel.Shape.STONE));
+        event.registerEntityRenderer(MagicRpg.HOLLOW_ARMOR.get(),
+            context -> new CitySentryRenderer(context, CitySentryModel.Shape.ARMOR));
+        event.registerEntityRenderer(MagicRpg.BURIED_WORKER.get(),
+            context -> new CitySentryRenderer(context, CitySentryModel.Shape.WORKER));
         event.registerEntityRenderer(MagicRpg.CHALK_GUARDIAN.get(), ChalkGuardianRenderer::new);
     }
 }

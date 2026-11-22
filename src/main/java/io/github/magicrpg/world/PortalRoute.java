@@ -30,8 +30,17 @@ public enum PortalRoute {
         return invalidFrameMessage;
     }
 
+    public String landingFullMessage() {
+        return this == GOLDENWOOD ? "item.magicrpg.charred_fang.goldenwood_no_space"
+            : "item.magicrpg.charred_fang.meadow_no_space";
+    }
+
     public Block frameBlock() {
         return this == GOLDENWOOD ? ReforgedIntegration.amberBlock() : ReforgedIntegration.portalBrick();
+    }
+
+    Block arrivalFrameBlock() {
+        return this == GOLDENWOOD ? Goldenwood.RETURN_ARCH.get() : frameBlock();
     }
 
     public LinkedPortalBlock portal() {

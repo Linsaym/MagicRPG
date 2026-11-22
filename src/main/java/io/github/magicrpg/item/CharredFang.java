@@ -1,5 +1,6 @@
 package io.github.magicrpg.item;
 
+import io.github.magicrpg.world.LinkedPortalBlock.Activation;
 import io.github.magicrpg.world.PortalRoute;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -24,8 +25,11 @@ public final class CharredFang extends Item {
             return InteractionResult.PASS;
         }
         if (level instanceof ServerLevel server && context.getPlayer() instanceof ServerPlayer player) {
-            if (!route.portal().activate(server, clicked, player)) {
-                player.sendOverlayMessage(Component.translatable(route.invalidFrameMessage()));
+            var activation = route.portal().activate(server, clicked, player);
+            if (activation != Activation.OPENED) {
+                var message = activation == Activation.LANDING_FULL
+                    ? route.landingFullMessage() : route.invalidFrameMessage();
+                player.sendOverlayMessage(Component.translatable(message));
                 return InteractionResult.FAIL;
             }
             context.getItemInHand().consume(1, player);

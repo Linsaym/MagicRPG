@@ -4,6 +4,7 @@ import io.github.magicrpg.compat.reforged.GoldenwoodMagic;
 import io.github.magicrpg.entity.AmberBolt;
 import io.github.magicrpg.entity.HoneyMoth;
 import io.github.magicrpg.entity.WoodlandMonster;
+import io.github.magicrpg.world.AuthoredIsland;
 import io.github.magicrpg.world.HoneybellBlock;
 import io.github.magicrpg.world.LinkedPortalBlock;
 import io.github.magicrpg.world.PortalRoute;
@@ -60,6 +61,8 @@ public final class Goldenwood {
     public static final DeferredBlock<LinkedPortalBlock> PORTAL = BLOCKS.registerBlock("goldenwood_portal",
         properties -> new LinkedPortalBlock(properties, PortalRoute.GOLDENWOOD),
         properties -> properties.noCollision().noOcclusion().instabreak().noLootTable().lightLevel(state -> 11));
+    public static final DeferredBlock<Block> RETURN_ARCH = BLOCKS.registerSimpleBlock("goldenwood_return_arch",
+        properties -> properties.strength(2).sound(SoundType.STONE).noLootTable());
 
     public static final DeferredItem<BlockItem> AMBER_GRASS_ITEM = ITEMS.registerSimpleBlockItem(AMBER_GRASS);
     public static final DeferredItem<BlockItem> HONEYSTONE_ITEM = ITEMS.registerSimpleBlockItem(HONEYSTONE);
@@ -109,6 +112,7 @@ public final class Goldenwood {
     }
 
     static void register(IEventBus bus) {
+        AuthoredIsland.register(bus);
         BLOCKS.register(bus);
         ITEMS.register(bus);
         ENTITIES.register(bus);

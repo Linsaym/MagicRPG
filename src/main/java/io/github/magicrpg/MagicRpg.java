@@ -3,6 +3,8 @@ package io.github.magicrpg;
 import io.github.magicrpg.compat.reforged.ReforgedIntegration;
 import io.github.magicrpg.entity.AshHound;
 import io.github.magicrpg.entity.ChalkGuardian;
+import io.github.magicrpg.entity.CitySentry;
+import io.github.magicrpg.entity.MeadowPaladin;
 import io.github.magicrpg.entity.StarHare;
 import io.github.magicrpg.item.CharredFang;
 import io.github.magicrpg.item.SummoningSeal;
@@ -18,6 +20,8 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -43,6 +47,15 @@ public final class MagicRpg {
 
     public static final DeferredItem<SummoningSeal> SEAL = ITEMS.registerItem("ash_hound_seal", SummoningSeal::new);
     public static final DeferredItem<CharredFang> FANG = ITEMS.registerItem("charred_fang", CharredFang::new);
+    public static final DeferredItem<Item> CHALK_HEART = ITEMS.registerSimpleItem("chalk_heart");
+    public static final DeferredItem<Item> ECHO_RIVET = ITEMS.registerSimpleItem("echo_rivet");
+    public static final DeferredItem<Item> OATH_CORE = ITEMS.registerSimpleItem("oath_core",
+        properties -> properties.rarity(Rarity.RARE));
+    public static final DeferredItem<Item> STAR_PRISM = ITEMS.registerSimpleItem("star_prism",
+        properties -> properties.rarity(Rarity.UNCOMMON));
+    public static final DeferredItem<Item> RESONANCE_COIL = ITEMS.registerSimpleItem("resonance_coil");
+    public static final DeferredItem<Item> CITY_SEAL = ITEMS.registerSimpleItem("city_seal",
+        properties -> properties.rarity(Rarity.UNCOMMON));
     public static final DeferredBlock<Block> WHITE_STONE = BLOCKS.registerSimpleBlock("white_stone",
         properties -> properties.strength(1.5F, 6).requiresCorrectToolForDrops().sound(SoundType.CALCITE));
     public static final DeferredBlock<Block> LILAC_GRASS = BLOCKS.registerSimpleBlock("lilac_grass",
@@ -81,6 +94,25 @@ public final class MagicRpg {
             .build(ResourceKey.create(Registries.ENTITY_TYPE, id))
     );
 
+    public static final DeferredHolder<EntityType<?>, EntityType<CitySentry>> CITY_STONE_GUARD =
+        citySentry("city_stone_guard", 1.05F, 2.15F);
+    public static final DeferredHolder<EntityType<?>, EntityType<CitySentry>> HOLLOW_ARMOR =
+        citySentry("hollow_armor", 0.8F, 1.95F);
+    public static final DeferredHolder<EntityType<?>, EntityType<CitySentry>> BURIED_WORKER =
+        citySentry("buried_worker", 0.64F, 1.45F);
+    public static final DeferredHolder<EntityType<?>, EntityType<MeadowPaladin>> MEADOW_PALADIN = ENTITIES.register(
+        "meadow_paladin", id -> EntityType.Builder.of(MeadowPaladin::new, MobCategory.MONSTER)
+            .sized(2.1F, 5.05F).eyeHeight(4.4F).clientTrackingRange(12).updateInterval(2)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE, id))
+    );
+
+    private static DeferredHolder<EntityType<?>, EntityType<CitySentry>> citySentry(
+            String name, float width, float height) {
+        return ENTITIES.register(name, id -> EntityType.Builder.of(CitySentry::new, MobCategory.MONSTER)
+            .sized(width, height).clientTrackingRange(8)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE, id)));
+    }
+
     public MagicRpg(IEventBus bus) {
         Goldenwood.register(bus);
         WayfarerMirrors.register(bus, BLOCKS, ITEMS);
@@ -98,6 +130,10 @@ public final class MagicRpg {
     private void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(ASH_HOUND.get(), AshHound.attributes().build());
         event.put(STAR_HARE.get(), StarHare.attributes().build());
+        event.put(MEADOW_PALADIN.get(), MeadowPaladin.attributes().build());
+        event.put(CITY_STONE_GUARD.get(), CitySentry.attributes(28, .16, 5, 5).build());
+        event.put(HOLLOW_ARMOR.get(), CitySentry.attributes(20, .24, 5, 4).build());
+        event.put(BURIED_WORKER.get(), CitySentry.attributes(8, .22, 2, 0).build());
         event.put(CHALK_GUARDIAN.get(), ChalkGuardian.attributes().build());
     }
 

@@ -35,9 +35,12 @@ final class ChalkGuardianModel extends EntityModel<LivingEntityRenderState> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild("body", CubeListBuilder.create()
             .texOffs(0, 0).addBox(-4.5F, -6, -3, 9, 8, 6)
-            .texOffs(32, 0).addBox(-3.5F, 2, -2.5F, 7, 2, 5), PartPose.offset(0, 14, 0));
+            .texOffs(32, 0).addBox(-3.5F, 2, -2.5F, 7, 2, 5)
+            .texOffs(48, 33).addBox(-2, -4, -4, 4, 5, 2), PartPose.offset(0, 14, 0));
         root.addOrReplaceChild("head", CubeListBuilder.create()
-            .texOffs(0, 16).addBox(-3.5F, -5, -3.5F, 7, 6, 6), PartPose.offset(0, 10, -1));
+            .texOffs(0, 16).addBox(-3.5F, -5, -3.5F, 7, 6, 6)
+            .texOffs(48, 40).addBox(-1, -9, -2, 2, 4, 3)
+            .texOffs(48, 33).addBox(-2, -6, -3, 4, 2, 2), PartPose.offset(0, 10, -1));
         addArm(root, "right_arm", -5.1F, 0, 31, 0.12F);
         addArm(root, "left_arm", 5.1F, 19, 31, -0.12F);
         addLeg(root, "right_leg", -2.4F, 30, 17);

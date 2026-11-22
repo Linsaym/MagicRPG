@@ -1,11 +1,7 @@
 {
-  "type": "minecraft:overworld",
+  "type": "magicrpg:lilac_meadows",
   "generator": {
-    "type": "minecraft:noise",
-    "settings": "magicrpg:lilac_meadows",
-    "biome_source": {
-      "type": "minecraft:fixed",
-      "biome": "magicrpg:lilac_meadows"
-    }
+    "type": "magicrpg:lilac_meadows_island",
+    "biome": "magicrpg:lilac_meadows"
   }
 }
