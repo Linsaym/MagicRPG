@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "package": "io.github.magicrpg.compat.reforged.client.mixin",
+  "client": [
+    "ResearchBackgroundMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "magicrpg:item/light_blue_wayfarer_mirror"
+  }
+}

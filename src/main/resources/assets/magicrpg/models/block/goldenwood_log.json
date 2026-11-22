@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "magicrpg:block/goldenwood_log",
+    "end": "magicrpg:block/goldenwood_log_end"
+  }
+}

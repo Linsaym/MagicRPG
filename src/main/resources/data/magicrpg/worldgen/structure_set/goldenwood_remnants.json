@@ -1,0 +1,26 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 4,
+    "separation": 2,
+    "salt": 301559913,
+    "exclusion_zone": {
+      "other_set": "magicrpg:goldenwood_ruins",
+      "chunk_count": 1
+    }
+  },
+  "structures": [
+    {
+      "structure": "magicrpg:waystone_remains",
+      "weight": 1
+    },
+    {
+      "structure": "magicrpg:broken_crossing",
+      "weight": 1
+    },
+    {
+      "structure": "magicrpg:collapsed_watchpost",
+      "weight": 1
+    }
+  ]
+}

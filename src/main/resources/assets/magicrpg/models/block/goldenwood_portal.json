@@ -1,0 +1,31 @@
+{
+  "render_type": "minecraft:translucent",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "magicrpg:block/goldenwood_portal",
+    "veil": "magicrpg:block/goldenwood_portal"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        7.8
+      ],
+      "to": [
+        16,
+        16,
+        8.2
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#veil"
+        },
+        "south": {
+          "texture": "#veil"
+        }
+      }
+    }
+  ]
+}

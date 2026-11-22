@@ -3,7 +3,10 @@ package io.github.magicrpg.compat.reforged;
 import io.github.magicrpg.MagicRpg;
 import java.util.List;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import thaumcraft.aspect.Aspect;
 import thaumcraft.aspect.AspectList;
 import thaumcraft.aspect.AspectSync;
@@ -13,40 +16,100 @@ import thaumcraft.crafting.TcRecipes;
 import thaumcraft.crafting.TcStack;
 import thaumcraft.research.ResearchCategories;
 import thaumcraft.research.ResearchItem;
+import thaumcraft.research.ResearchManager;
 import thaumcraft.research.ResearchPage;
+import thaumcraft.registry.ModBlocks;
 
 public final class ReforgedIntegration {
-    private static final String CATEGORY = "MAGICRPG_BEASTS";
-    private static final String RESEARCH = "MAGICRPG_ASH_HOUND";
+    public static final String BEASTS_CATEGORY = "MAGICRPG_BEASTS";
+    private static final String ASH_HOUND_RESEARCH = "MAGICRPG_ASH_HOUND";
+    static final String FANG_RESEARCH = "MAGICRPG_CHARRED_FANG";
+    static final String MEADOWS_RESEARCH = "MAGICRPG_LILAC_MEADOWS";
+    private static final String INVENTORY_SCANNING_RESEARCH = "MAGICRPG_INVENTORY_SCANNING";
     private static final String RECIPE = "magicrpg:ash_hound_seal";
 
     private ReforgedIntegration() {}
 
+    public static Block portalBrick() {
+        return ModBlocks.ARCANE_STONE_BRICKS.get();
+    }
+
+    public static Block amberBlock() {
+        return ModBlocks.AMBER_BLOCK.get();
+    }
+
     public static void setup(FMLCommonSetupEvent event) {
         event.enqueueWork(ReforgedIntegration::registerResearchAndRecipe);
+        GoldenwoodMagic.registerAspects();
+        WayfarerMirrorMagic.registerAspects();
         AspectSync.addRegistrar(registry -> {
             registry.register(MagicRpg.FANG.get(), new AspectList().add(Aspect.BEAST, 2).add(Aspect.FIRE, 2));
+            registry.register(MagicRpg.SEAL.get(), new AspectList()
+                .add(Aspect.FIRE, 2).add(Aspect.BEAST, 1).add(Aspect.MAGIC, 1));
+            registry.register(MagicRpg.WHITE_STONE_ITEM.get(), new AspectList().add(Aspect.EARTH, 3).add(Aspect.ORDER, 1));
+            registry.register(MagicRpg.LILAC_GRASS_ITEM.get(), new AspectList().add(Aspect.EARTH, 2).add(Aspect.PLANT, 1));
             registry.registerEntity(MagicRpg.ASH_HOUND.get(), new AspectList()
                 .add(Aspect.BEAST, 4).add(Aspect.FIRE, 3).add(Aspect.ENTROPY, 2).add(Aspect.MOTION, 2));
         });
     }
 
     private static void registerResearchAndRecipe() {
-        ResearchCategories.registerCategory(CATEGORY, MagicRpg.id("textures/gui/beasts.png"),
+        ResearchCategories.registerCategory(BEASTS_CATEGORY, MagicRpg.id("textures/gui/beasts.png"),
             Identifier.parse("thaumcraft:textures/gui/gui_researchback.png"));
 
         TcStack seal = TcStack.of(RECIPE);
-        TcRecipes.register(new ShapelessArcaneRecipe(RECIPE, RESEARCH, seal,
+        TcRecipes.register(new ShapelessArcaneRecipe(RECIPE, ASH_HOUND_RESEARCH, seal,
             new AspectList().add(Aspect.FIRE, 8).add(Aspect.ENTROPY, 4),
             List.of(TcIngredient.item("minecraft:coal"), TcIngredient.item("minecraft:bone"),
                 TcIngredient.item("minecraft:gunpowder"))));
 
-        new ResearchItem(RESEARCH, CATEGORY, new AspectList().add(Aspect.FIRE, 3).add(Aspect.ENTROPY, 3),
-            0, 0, 1, seal)
+        new ResearchItem(INVENTORY_SCANNING_RESEARCH, BEASTS_CATEGORY, new AspectList(), 0, 0, 1,
+            TcStack.of("thaumcraft:thaumometer"))
+            .setAutoUnlock()
+            .setPages(page(INVENTORY_SCANNING_RESEARCH, 1))
+            .registerResearchItem();
+
+        new ResearchItem(ASH_HOUND_RESEARCH, BEASTS_CATEGORY, new AspectList().add(Aspect.FIRE, 3).add(Aspect.ENTROPY, 3),
+            2, 0, 1, seal)
+            .setParents(INVENTORY_SCANNING_RESEARCH)
             .setParentsHidden("RESEARCH")
             .setSecondary()
-            .setPages(ResearchPage.text("tc.research_page." + RESEARCH + ".1"),
-                ResearchPage.arcane(RECIPE))
+            .setPages(page(ASH_HOUND_RESEARCH, 1), ResearchPage.arcane(RECIPE))
             .registerResearchItem();
+
+        new ResearchItem(FANG_RESEARCH, BEASTS_CATEGORY, new AspectList(), 4, 0, 1,
+            TcStack.of("magicrpg:charred_fang"))
+            .setParents(ASH_HOUND_RESEARCH)
+            .setPages(page(FANG_RESEARCH, 1))
+            .registerResearchItem();
+
+        diary(MEADOWS_RESEARCH, "magicrpg:white_stone", FANG_RESEARCH, 6, -2, Aspect.EARTH, Aspect.ORDER,
+            page(MEADOWS_RESEARCH, 1), page(MEADOWS_RESEARCH, 2));
+        WayfarerMirrorMagic.registerResearchAndRecipes();
+        GoldenwoodMagic.registerResearchAndRecipe();
+    }
+
+    static void diary(String key, String icon, String parent, int x, int y, Aspect first, Aspect second,
+                      ResearchPage... pages) {
+        new ResearchItem(key, BEASTS_CATEGORY, new AspectList().add(first, 1).add(second, 1), x, y, 1, TcStack.of(icon))
+            .setParents(parent).setSecondary().setPages(pages).registerResearchItem();
+    }
+
+    static ResearchPage page(String key, int page) {
+        return ResearchPage.text("tc.research_page." + key + "." + page);
+    }
+
+    public static void unlockFieldNotes(PlayerTickEvent.Post event) {
+        // Reforged's login auto-unlock bypasses prerequisites. Check old and new knowledge through the same gate.
+        if (event.getEntity() instanceof ServerPlayer player && player.tickCount % 20 == 0) {
+            unlockWhenReady(player, FANG_RESEARCH);
+            unlockWhenReady(player, WayfarerMirrorMagic.RESEARCH);
+        }
+    }
+
+    private static void unlockWhenReady(ServerPlayer player, String key) {
+        if (!ResearchManager.isComplete(player, key) && ResearchManager.hasRequisites(player, key)) {
+            ResearchManager.complete(player, key);
+        }
     }
 }

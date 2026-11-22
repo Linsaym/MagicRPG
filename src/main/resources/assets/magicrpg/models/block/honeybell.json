@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "magicrpg:block/honeybell"
+  },
+  "render_type": "minecraft:cutout"
+}

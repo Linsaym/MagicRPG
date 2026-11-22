@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "magicrpg:block/rotten_goldenwood_log"
+    },
+    "axis=x": {
+      "model": "magicrpg:block/rotten_goldenwood_log",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "magicrpg:block/rotten_goldenwood_log",
+      "x": 90
+    }
+  }
+}

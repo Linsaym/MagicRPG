@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "magicrpg:block/goldenwood_leaves"
+      },
+      {
+        "model": "magicrpg:block/goldenwood_leaves",
+        "y": 90
+      },
+      {
+        "model": "magicrpg:block/goldenwood_leaves",
+        "y": 180
+      },
+      {
+        "model": "magicrpg:block/goldenwood_leaves",
+        "y": 270
+      }
+    ]
+  }
+}

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'io.github.magicrpg'
-version = '0.1.0'
+version = '0.4.9'
 base.archivesName = 'magicrpg'
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 

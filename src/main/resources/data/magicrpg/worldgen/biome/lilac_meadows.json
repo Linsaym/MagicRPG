@@ -1,0 +1,58 @@
+{
+  "temperature": 0.65,
+  "downfall": 0.45,
+  "has_precipitation": true,
+  "effects": {
+    "water_color": "#6388be"
+  },
+  "attributes": {
+    "minecraft:visual/sky_color": "#a4acdf",
+    "minecraft:visual/fog_color": "#ded2ed",
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {
+          "magicrpg:chalk_guardian": {
+            "charge": 1.0,
+            "energy_budget": 0.09
+          }
+        },
+        "spawns_by_category": {
+          "creature": [
+            {
+              "type": "magicrpg:star_hare",
+              "count": {
+                "type": "minecraft:uniform",
+                "min_inclusive": 2,
+                "max_inclusive": 3
+              },
+              "weight": 10
+            }
+          ],
+          "monster": [
+            {
+              "type": "magicrpg:chalk_guardian",
+              "count": 1,
+              "weight": 1
+            }
+          ]
+        }
+      }
+    }
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "magicrpg:meadow_alliums"
+    ]
+  ]
+}

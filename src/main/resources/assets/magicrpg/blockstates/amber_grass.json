@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "magicrpg:block/amber_grass"
+      },
+      {
+        "model": "magicrpg:block/amber_grass",
+        "y": 90
+      },
+      {
+        "model": "magicrpg:block/amber_grass",
+        "y": 180
+      },
+      {
+        "model": "magicrpg:block/amber_grass",
+        "y": 270
+      }
+    ]
+  }
+}

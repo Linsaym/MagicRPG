@@ -8,6 +8,9 @@ version = "${version}"
 displayName = "MagicRPG"
 description = "Monstrous creatures and summoning rites for Thaumcraft 4: Reforged."
 
+[[mixins]]
+config = "magicrpg.mixins.json"
+
 [[dependencies.magicrpg]]
 modId = "minecraft"
 type = "required"

@@ -1,0 +1,6 @@
+{
+  "parent": "magicrpg:block/wayfarer_mirror",
+  "textures": {
+    "frame": "minecraft:block/light_blue_terracotta"
+  }
+}

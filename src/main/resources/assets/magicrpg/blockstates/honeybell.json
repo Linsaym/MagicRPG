@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "magicrpg:block/honeybell"
+    },
+    "lit=true": {
+      "model": "magicrpg:block/honeybell_pollinated"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "magicrpg:block/purple_wayfarer_mirror"
+    },
+    "facing=east": {
+      "model": "magicrpg:block/purple_wayfarer_mirror",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "magicrpg:block/purple_wayfarer_mirror",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "magicrpg:block/purple_wayfarer_mirror",
+      "y": 270
+    }
+  }
+}

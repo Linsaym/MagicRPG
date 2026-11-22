@@ -1,0 +1,26 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 813722061,
+    "separation": 3,
+    "spacing": 7
+  },
+  "structures": [
+    {
+      "structure": "magicrpg:sunken_sanctuary",
+      "weight": 1
+    },
+    {
+      "structure": "magicrpg:broken_spire",
+      "weight": 1
+    },
+    {
+      "structure": "magicrpg:rootbound_altar",
+      "weight": 1
+    },
+    {
+      "structure": "magicrpg:abandoned_hamlet",
+      "weight": 1
+    }
+  ]
+}

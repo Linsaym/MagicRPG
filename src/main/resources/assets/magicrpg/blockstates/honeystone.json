@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "magicrpg:block/honeystone"
+      },
+      {
+        "model": "magicrpg:block/honeystone",
+        "y": 90
+      },
+      {
+        "model": "magicrpg:block/honeystone",
+        "y": 180
+      },
+      {
+        "model": "magicrpg:block/honeystone",
+        "y": 270
+      }
+    ]
+  }
+}

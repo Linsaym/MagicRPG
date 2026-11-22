@@ -1,0 +1,18 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 4,
+    "separation": 3,
+    "salt": 154985121,
+    "exclusion_zone": {
+      "other_set": "magicrpg:goldenwood_ruins",
+      "chunk_count": 2
+    }
+  },
+  "structures": [
+    {
+      "structure": "magicrpg:goldenwood_colossus",
+      "weight": 1
+    }
+  ]
+}

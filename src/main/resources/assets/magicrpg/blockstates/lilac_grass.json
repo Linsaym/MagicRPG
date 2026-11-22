@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "magicrpg:block/lilac_grass"
+      },
+      {
+        "model": "magicrpg:block/lilac_grass",
+        "y": 90
+      },
+      {
+        "model": "magicrpg:block/lilac_grass",
+        "y": 180
+      },
+      {
+        "model": "magicrpg:block/lilac_grass",
+        "y": 270
+      }
+    ]
+  }
+}

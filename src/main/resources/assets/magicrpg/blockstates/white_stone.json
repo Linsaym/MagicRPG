@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "magicrpg:block/white_stone"
+      },
+      {
+        "model": "magicrpg:block/white_stone",
+        "y": 90
+      },
+      {
+        "model": "magicrpg:block/white_stone",
+        "y": 180
+      },
+      {
+        "model": "magicrpg:block/white_stone",
+        "y": 270
+      }
+    ]
+  }
+}

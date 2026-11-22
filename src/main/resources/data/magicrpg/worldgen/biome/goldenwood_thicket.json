@@ -1,0 +1,83 @@
+{
+  "temperature": 0.78,
+  "downfall": 0.55,
+  "has_precipitation": false,
+  "effects": {
+    "water_color": "#777f55"
+  },
+  "attributes": {
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawns_by_category": {
+          "monster": [
+            {
+              "type": "magicrpg:sprout_ent",
+              "count": {
+                "type": "minecraft:uniform",
+                "min_inclusive": 2,
+                "max_inclusive": 3
+              },
+              "weight": 16
+            },
+            {
+              "type": "magicrpg:amber_bark_beetle",
+              "count": {
+                "type": "minecraft:uniform",
+                "min_inclusive": 4,
+                "max_inclusive": 6
+              },
+              "weight": 14
+            }
+          ],
+          "ambient": [
+            {
+              "type": "magicrpg:honey_moth",
+              "count": {
+                "type": "minecraft:uniform",
+                "min_inclusive": 3,
+                "max_inclusive": 5
+              },
+              "weight": 11
+            }
+          ]
+        },
+        "spawn_costs": {
+          "magicrpg:sprout_ent": {
+            "charge": 0.31,
+            "energy_budget": 0.37
+          },
+          "magicrpg:guardian_ent": {
+            "charge": 1.0,
+            "energy_budget": 0.18
+          },
+          "magicrpg:ruin_spark": {
+            "charge": 0.65,
+            "energy_budget": 0.2
+          }
+        }
+      }
+    }
+  },
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "magicrpg:goldenwood_fallen_log",
+      "magicrpg:honeybell_thicket",
+      "magicrpg:honeybell_banks",
+      "magicrpg:goldenwood_grasses",
+      "magicrpg:goldenwood_mushrooms",
+      "minecraft:patch_firefly_bush_near_water",
+      "minecraft:patch_bush"
+    ]
+  ]
+}
