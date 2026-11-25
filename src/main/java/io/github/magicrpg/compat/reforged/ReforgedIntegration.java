@@ -2,10 +2,13 @@ package io.github.magicrpg.compat.reforged;
 
 import io.github.magicrpg.MagicRpg;
 import java.util.List;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import thaumcraft.aspect.Aspect;
 import thaumcraft.aspect.AspectList;
@@ -14,6 +17,7 @@ import thaumcraft.crafting.ShapelessArcaneRecipe;
 import thaumcraft.crafting.TcIngredient;
 import thaumcraft.crafting.TcRecipes;
 import thaumcraft.crafting.TcStack;
+import thaumcraft.infusion.InfusionMatrixBlockEntity;
 import thaumcraft.research.ResearchCategories;
 import thaumcraft.research.ResearchItem;
 import thaumcraft.research.ResearchManager;
@@ -127,6 +131,18 @@ public final class ReforgedIntegration {
         if (event.getEntity() instanceof ServerPlayer player && player.tickCount % 20 == 0) {
             unlockWhenReady(player, FANG_RESEARCH);
             unlockWhenReady(player, WayfarerMirrorMagic.RESEARCH);
+        }
+    }
+
+    public static void showMatrixStability(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getHand() == InteractionHand.MAIN_HAND && event.getEntity() instanceof ServerPlayer player
+            && event.getLevel().getBlockEntity(event.getPos()) instanceof InfusionMatrixBlockEntity matrix) {
+            matrix.recalculateSurroundings();
+            // Reforged adds symmetry to recipe instability. Invert it to show the altar's stability bonus.
+            int stability = -matrix.getSymmetry();
+            String value = stability > 0 ? "+" + stability : Integer.toString(stability);
+            player.sendSystemMessage(Component.translatable("message.magicrpg.matrix_stability", value));
+            MatrixAsymmetry.report(player, matrix);
         }
     }
 

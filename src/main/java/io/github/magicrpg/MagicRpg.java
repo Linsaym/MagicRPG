@@ -1,6 +1,7 @@
 package io.github.magicrpg;
 
 import io.github.magicrpg.compat.reforged.ReforgedIntegration;
+import io.github.magicrpg.compat.reforged.ReforgedSpawnBalance;
 import io.github.magicrpg.entity.AncientMerchant;
 import io.github.magicrpg.entity.AshHound;
 import io.github.magicrpg.entity.ChalkGuardian;
@@ -186,6 +187,7 @@ public final class MagicRpg {
     }
 
     public MagicRpg(IEventBus bus) {
+        ReforgedSpawnBalance.register(bus);
         Goldenwood.register(bus);
         IronWastelands.register(bus);
         WayfarerMirrors.register(bus, BLOCKS, ITEMS);
@@ -199,6 +201,7 @@ public final class MagicRpg {
         bus.addListener(ReforgedIntegration::setup);
         bus.addListener(ScanInventorySlotPayload::register);
         NeoForge.EVENT_BUS.addListener(ReforgedIntegration::unlockFieldNotes);
+        NeoForge.EVENT_BUS.addListener(ReforgedIntegration::showMatrixStability);
         NeoForge.EVENT_BUS.addListener(TimeTurner::onServerTick);
         NeoForge.EVENT_BUS.addListener(LilacArmor::regenerate);
         NeoForge.EVENT_BUS.addListener(IslandExport::register);

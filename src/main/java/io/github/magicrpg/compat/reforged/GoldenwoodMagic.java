@@ -71,7 +71,7 @@ public final class GoldenwoodMagic {
             .setParents(INHABITANTS, RUINS)
             .setParentsHidden("INFUSION")
             .setSecondary()
-            .setPages(page(RING, 1), page(RING, 2), ResearchPage.infusion(RECIPE))
+            .setPages(page(RING, 1), page(RING, 2), ResearchPage.infusion(RECIPE), page(RING, 3))
             .registerResearchItem();
     }
 
