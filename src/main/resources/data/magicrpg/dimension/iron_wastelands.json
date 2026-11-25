@@ -1,0 +1,7 @@
+{
+  "type": "magicrpg:iron_wastelands",
+  "generator": {
+    "type": "magicrpg:iron_wastelands_island",
+    "biome": "magicrpg:iron_wastelands"
+  }
+}

@@ -30,8 +30,8 @@ public final class ChalkGuardian extends Monster {
     }
 
     public static AttributeSupplier.Builder attributes() {
-        return createMonsterAttributes().add(Attributes.MAX_HEALTH, 16).add(Attributes.MOVEMENT_SPEED, 0.19)
-            .add(Attributes.ATTACK_DAMAGE, 3).add(Attributes.FOLLOW_RANGE, 18);
+        return createMonsterAttributes().add(Attributes.MAX_HEALTH, 28).add(Attributes.MOVEMENT_SPEED, .25)
+            .add(Attributes.ATTACK_DAMAGE, 6).add(Attributes.ARMOR, 4).add(Attributes.FOLLOW_RANGE, 18);
     }
 
     public static boolean canSpawn(EntityType<ChalkGuardian> type, ServerLevelAccessor level,

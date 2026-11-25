@@ -3,6 +3,6 @@
   "textures": {
     "top": "magicrpg:block/lilac_grass_top",
     "side": "magicrpg:block/lilac_grass_side",
-    "bottom": "magicrpg:block/white_stone"
+    "bottom": "magicrpg:block/lilac_grass_bottom"
   }
 }

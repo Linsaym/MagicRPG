@@ -6,14 +6,18 @@ import io.github.magicrpg.MagicRpg;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -25,6 +29,7 @@ final class PortalLinks extends SavedData {
     private static final int[] EXIT_HEIGHTS = {0, 1, -1, 2, -2};
     private static final SavedDataType<PortalLinks> MEADOW_LINKS = type("meadow_portals");
     private static final SavedDataType<PortalLinks> GOLDENWOOD_LINKS = type("goldenwood_portals");
+    private static final SavedDataType<PortalLinks> WASTELANDS_LINKS = type("iron_wastelands_portals");
 
     private static SavedDataType<PortalLinks> type(String id) {
         return new SavedDataType<>(MagicRpg.id(id), () -> new PortalLinks(List.of()),
@@ -54,16 +59,22 @@ final class PortalLinks extends SavedData {
                                                     PortalRoute route) {
         var server = source.getServer();
         var portals = forRoute(source, route);
+        var sharedArch = route.sharedArch();
         boolean arrivingOnIsland = !source.dimension().equals(route.dimension());
         ServerLevel target;
         BlockPos exit;
+        var after = TeleportTransition.PLAY_PORTAL_SOUND.then(TeleportTransition.PLACE_PORTAL_TICKET);
         if (source.dimension().equals(route.dimension())) {
             var link = portals.byDestination.get(frame);
-            if (link == null) {
+            boolean shared = frame.equals(sharedArch);
+            var origin = shared ? SharedReturns.get(source, route).origins.get(player.getUUID()) : null;
+            if (origin == null && link != null) {
+                origin = link.origin();
+            }
+            if (origin == null && !shared) {
                 return null;
             }
-            var origin = link.origin();
-            target = server.getLevel(origin.dimension());
+            target = origin == null ? null : server.getLevel(origin.dimension());
             exit = target == null ? null : findExit(target, origin.frame(), player, route, false);
             if (exit == null) {
                 target = server.findRespawnDimension();
@@ -75,21 +86,53 @@ final class PortalLinks extends SavedData {
                 return null;
             }
             var origin = new Origin(source.dimension(), frame);
-            var link = portals.prepareIslandLink(target, origin, route);
-            if (link == null) {
-                return null;
+            if (sharedArch != null) {
+                exit = prepareSharedArch(target, player, route, sharedArch);
+                if (exit == null) {
+                    player.sendOverlayMessage(Component.translatable(route.landingFullMessage()));
+                }
+                after = after.then(entity -> SharedReturns.get(source, route).record(entity.getUUID(), origin));
+            } else {
+                var link = portals.prepareIslandLink(target, origin, route);
+                exit = link == null ? null : findExit(target, link.destination(), player, route, true);
             }
-            exit = findExit(target, link.destination(), player, route, arrivingOnIsland);
         }
         return exit == null ? null : new TeleportTransition(target, Vec3.atBottomCenterOf(exit), Vec3.ZERO,
-            arrivingOnIsland ? 180.0F : player.getYRot(), arrivingOnIsland ? 0.0F : player.getXRot(),
-            TeleportTransition.PLAY_PORTAL_SOUND
-                .then(TeleportTransition.PLACE_PORTAL_TICKET));
+            arrivingOnIsland ? 180.0F : player.getYRot(), arrivingOnIsland ? 0.0F : player.getXRot(), after);
     }
 
     private static PortalLinks forRoute(ServerLevel level, PortalRoute route) {
-        return level.getServer().overworld().getDataStorage().computeIfAbsent(
-            route == PortalRoute.GOLDENWOOD ? GOLDENWOOD_LINKS : MEADOW_LINKS);
+        return level.getServer().overworld().getDataStorage().computeIfAbsent(typeForRoute(route));
+    }
+
+    private static SavedDataType<PortalLinks> typeForRoute(PortalRoute route) {
+        return switch (route) {
+            case GOLDENWOOD -> GOLDENWOOD_LINKS;
+            case MEADOWS -> MEADOW_LINKS;
+            case IRON_WASTELANDS -> WASTELANDS_LINKS;
+        };
+    }
+
+    static Map<BlockPos, BlockState> arrivalBlocksForExport(ServerLevel level, PortalRoute route) {
+        var links = level.getServer().overworld().getDataStorage().get(typeForRoute(route));
+        if (links == null) {
+            return Map.of();
+        }
+        Map<BlockPos, BlockState> blocks = new HashMap<>();
+        for (var frame : links.byDestination.keySet()) {
+            if (frame.equals(route.sharedArch())) {
+                continue;
+            }
+            for (var pos : arrivalSpace(frame)) {
+                if (pos.getY() == frame.base().getY() - 1) {
+                    blocks.put(pos.immutable(), route.platform().defaultBlockState());
+                }
+            }
+            for (var pos : frame.border()) {
+                blocks.put(pos, route.arrivalFrameBlock().defaultBlockState());
+            }
+        }
+        return blocks;
     }
 
     static boolean prepareIslandArch(ServerLevel source, PortalFrame frame, ServerPlayer player, PortalRoute route) {
@@ -97,9 +140,42 @@ final class PortalLinks extends SavedData {
         if (target == null) {
             return false;
         }
+        var sharedArch = route.sharedArch();
+        if (sharedArch != null) {
+            return prepareSharedArch(target, player, route, sharedArch) != null;
+        }
         var portals = forRoute(source, route);
         var link = portals.prepareIslandLink(target, new Origin(source.dimension(), frame), route);
         return link != null && findExit(target, link.destination(), player, route, true) != null;
+    }
+
+    private static @Nullable BlockPos prepareSharedArch(ServerLevel level, ServerPlayer player,
+                                                         PortalRoute route, PortalFrame frame) {
+        boolean open = frame.isOpen(level, route);
+        if (!open) {
+            for (var pos : frame.border()) {
+                var state = level.getBlockState(pos);
+                if (!level.getWorldBorder().isWithinBounds(pos) || !(state.is(route.frameBlock()) || state.isAir()
+                    || (pos.getY() < frame.base().getY() && route.isNaturalFloor(state)))) {
+                    return null;
+                }
+            }
+            for (var pos : frame.interior()) {
+                var state = level.getBlockState(pos);
+                if (!level.getWorldBorder().isWithinBounds(pos) || !(state.isAir() || state.is(route.portal()))) {
+                    return null;
+                }
+            }
+        }
+        for (var pos : frame.exits().reversed()) {
+            if (isSafe(level, pos, player)) {
+                if (!open) {
+                    frame.build(level, route);
+                }
+                return pos;
+            }
+        }
+        return null;
     }
 
     private @Nullable Link prepareIslandLink(ServerLevel level, Origin origin, PortalRoute route) {
@@ -115,14 +191,11 @@ final class PortalLinks extends SavedData {
             }
         }
         // Keep the old return address until its replacement can be built.
-        boolean meadows = route == PortalRoute.MEADOWS;
-        int[] columns = meadows ? new int[]{0, -8, 8, -16, 16} : new int[]{0, -8, 8, -16, 16, -24, 24};
-        int firstZ = meadows ? AuthoredIsland.MEADOW_FIRST_ARCH_Z : AuthoredIsland.FIRST_ARCH_Z;
-        int y = meadows ? AuthoredIsland.MEADOW_ARRIVAL_Y : AuthoredIsland.ARRIVAL_Y;
-        for (int row = 0; row < (meadows ? 2 : 5); row++) {
-            int z = firstZ + row * 8;
+        int[] columns = {0, -8, 8, -16, 16, -24, 24};
+        for (int row = 0; row < 5; row++) {
+            int z = AuthoredIsland.FIRST_ARCH_Z + row * 8;
             for (int x : columns) {
-                var frame = new PortalFrame(new BlockPos(x, y, z), Direction.Axis.X);
+                var frame = new PortalFrame(new BlockPos(x, AuthoredIsland.ARRIVAL_Y, z), Direction.Axis.X);
                 var occupant = byDestination.get(frame);
                 if (!canBuild(level, frame, route, occupant != null)
                     || (occupant != null && !isAbandoned(level, occupant, route))) {
@@ -267,6 +340,34 @@ final class PortalLinks extends SavedData {
             Level.RESOURCE_KEY_CODEC.fieldOf("dimension").forGetter(Origin::dimension),
             PortalFrame.CODEC.fieldOf("frame").forGetter(Origin::frame)
         ).apply(instance, Origin::new));
+    }
+
+    private static final class SharedReturns extends SavedData {
+        private static final SavedDataType<SharedReturns> MEADOWS = type("meadow_returns");
+        private static final SavedDataType<SharedReturns> WASTELANDS = type("iron_wastelands_returns");
+
+        private static SavedDataType<SharedReturns> type(String id) {
+            return new SavedDataType<>(MagicRpg.id(id), () -> new SharedReturns(Map.of()),
+                Codec.unboundedMap(UUIDUtil.STRING_CODEC, Origin.CODEC)
+                    .fieldOf("origins").xmap(SharedReturns::new, data -> data.origins).codec());
+        }
+
+        private final Map<UUID, Origin> origins;
+
+        private SharedReturns(Map<UUID, Origin> origins) {
+            this.origins = new HashMap<>(origins);
+        }
+
+        private static SharedReturns get(ServerLevel level, PortalRoute route) {
+            var type = route == PortalRoute.MEADOWS ? MEADOWS : WASTELANDS;
+            return level.getServer().overworld().getDataStorage().computeIfAbsent(type);
+        }
+
+        private void record(UUID player, Origin origin) {
+            if (!origin.equals(origins.put(player, origin))) {
+                setDirty();
+            }
+        }
     }
 
     private record Link(Origin origin, PortalFrame destination) {

@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "magicrpg:block/lilac_log_x"
+    },
+    "axis=y": {
+      "model": "magicrpg:block/lilac_log_y"
+    },
+    "axis=z": {
+      "model": "magicrpg:block/lilac_log_z"
+    }
+  }
+}

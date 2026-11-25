@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "magicrpg:block/ancient_crystals"
+    },
+    "facing=down": {
+      "model": "magicrpg:block/ancient_crystals",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "magicrpg:block/ancient_crystals",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "magicrpg:block/ancient_crystals",
+      "x": 90,
+      "y": 90
+    },
+    "facing=south": {
+      "model": "magicrpg:block/ancient_crystals",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "magicrpg:block/ancient_crystals",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

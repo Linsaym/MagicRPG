@@ -1,0 +1,376 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "magicrpg:block/ancient_crystals",
+    "facet": "magicrpg:block/ancient_crystals"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        10,
+        11,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            1,
+            7,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            1,
+            7,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            1,
+            7,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            1,
+            7,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            1,
+            7,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            1,
+            7,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        11,
+        7
+      ],
+      "to": [
+        9,
+        12,
+        9
+      ],
+      "faces": {
+        "up": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ]
+        },
+        "down": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ]
+        },
+        "north": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#facet",
+          "uv": [
+            0,
+            0,
+            4,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        0,
+        6
+      ],
+      "to": [
+        6,
+        7,
+        9
+      ],
+      "faces": {
+        "up": {
+          "texture": "#facet",
+          "uv": [
+            4,
+            2,
+            10,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#facet",
+          "uv": [
+            4,
+            2,
+            10,
+            14
+          ]
+        },
+        "north": {
+          "texture": "#facet",
+          "uv": [
+            4,
+            2,
+            10,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#facet",
+          "uv": [
+            4,
+            2,
+            10,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#facet",
+          "uv": [
+            4,
+            2,
+            10,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#facet",
+          "uv": [
+            4,
+            2,
+            10,
+            14
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          4.5,
+          0,
+          7.5
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        10,
+        0,
+        8
+      ],
+      "to": [
+        13,
+        8,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#facet",
+          "uv": [
+            8,
+            2,
+            14,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#facet",
+          "uv": [
+            8,
+            2,
+            14,
+            14
+          ]
+        },
+        "north": {
+          "texture": "#facet",
+          "uv": [
+            8,
+            2,
+            14,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#facet",
+          "uv": [
+            8,
+            2,
+            14,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#facet",
+          "uv": [
+            8,
+            2,
+            14,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#facet",
+          "uv": [
+            8,
+            2,
+            14,
+            14
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          11.5,
+          0,
+          9.5
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "from": [
+        6,
+        0,
+        10
+      ],
+      "to": [
+        9,
+        5,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#facet",
+          "uv": [
+            1,
+            5,
+            7,
+            15
+          ]
+        },
+        "down": {
+          "texture": "#facet",
+          "uv": [
+            1,
+            5,
+            7,
+            15
+          ]
+        },
+        "north": {
+          "texture": "#facet",
+          "uv": [
+            1,
+            5,
+            7,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#facet",
+          "uv": [
+            1,
+            5,
+            7,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#facet",
+          "uv": [
+            1,
+            5,
+            7,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#facet",
+          "uv": [
+            1,
+            5,
+            7,
+            15
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.5,
+          0,
+          11.5
+        ],
+        "axis": "x",
+        "angle": 22.5
+      }
+    }
+  ]
+}

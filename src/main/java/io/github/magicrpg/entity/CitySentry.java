@@ -27,24 +27,23 @@ public final class CitySentry extends PathfinderMob {
 
     public CitySentry(EntityType<? extends CitySentry> type, Level level) {
         super(type, level);
-        setPersistenceRequired();
         xpReward = 2;
     }
 
     public static AttributeSupplier.Builder attributes(double health, double speed, double damage, double armor) {
         return createMobAttributes().add(Attributes.MAX_HEALTH, health).add(Attributes.MOVEMENT_SPEED, speed)
             .add(Attributes.ATTACK_DAMAGE, damage).add(Attributes.ARMOR, armor)
-            .add(Attributes.FOLLOW_RANGE, 9);
+            .add(Attributes.FOLLOW_RANGE, 16);
     }
 
     public void station(BlockPos pos) {
         post = pos;
-        setHomeTo(pos, getType() == MagicRpg.HOLLOW_ARMOR.get() ? 9 : 5);
+        setHomeTo(pos, getType() == MagicRpg.HOLLOW_ARMOR.get() ? 15 : 10);
     }
 
     @Override
     protected void registerGoals() {
-        goalSelector.addGoal(1, new MeleeAttackGoal(this, 1, false));
+        goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.1, true));
         goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, .8));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
         if (getType() != MagicRpg.BURIED_WORKER.get()) {
@@ -60,7 +59,7 @@ public final class CitySentry extends PathfinderMob {
         }
         if (getType() == MagicRpg.CITY_STONE_GUARD.get() && target instanceof LivingEntity living) {
             var source = damageSources().mobAttack(this);
-            living.knockback(.65, getX() - target.getX(), getZ() - target.getZ(), source, 5);
+            living.knockback(.85, getX() - target.getX(), getZ() - target.getZ(), source, 9);
             playSound(SoundEvents.CALCITE_BREAK, .8F, .65F);
             level.sendParticles(ParticleTypes.POOF, target.getX(), target.getY() + .5, target.getZ(),
                 9, .25, .2, .25, .09);

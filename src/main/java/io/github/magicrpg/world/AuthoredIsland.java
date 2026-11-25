@@ -6,7 +6,9 @@ import io.github.magicrpg.MagicRpg;
 import io.github.magicrpg.entity.CitySentry;
 import io.github.magicrpg.entity.MeadowPaladin;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -22,11 +24,16 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.ChunkPos;
@@ -52,6 +59,7 @@ import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jspecify.annotations.Nullable;
@@ -60,15 +68,14 @@ import org.jspecify.annotations.Nullable;
 public final class AuthoredIsland extends ChunkGenerator {
     static final int ARRIVAL_Y = 112;
     static final int FIRST_ARCH_Z = 118;
-    private static final int HEIGHT = 192;
+    static final int HEIGHT = 192;
+    static final int COLUMNS_PER_TILE = 256;
     private static final Set<Heightmap.Types> TERRAIN_HEIGHTMAPS =
         Set.of(Heightmap.Types.WORLD_SURFACE_WG, Heightmap.Types.OCEAN_FLOOR_WG);
-    static final int MEADOW_ARRIVAL_Y = 113;
-    static final int MEADOW_FIRST_ARCH_Z = 49;
-
     private enum MapData {
         GOLDENWOOD("goldenwood", 83),
-        MEADOWS("lilac_meadows", 112);
+        MEADOWS("lilac_meadows", 112),
+        IRON_WASTELANDS("iron_wastelands", 104);
 
         private final String name;
         private final int seaLevel;
@@ -98,6 +105,7 @@ public final class AuthoredIsland extends ChunkGenerator {
     public static void register(IEventBus bus) {
         GENERATORS.register("goldenwood_island", () -> MapData.GOLDENWOOD.codec);
         GENERATORS.register("lilac_meadows_island", () -> MapData.MEADOWS.codec);
+        GENERATORS.register("iron_wastelands_island", () -> MapData.IRON_WASTELANDS.codec);
         GENERATORS.register(bus);
     }
 
@@ -105,6 +113,14 @@ public final class AuthoredIsland extends ChunkGenerator {
         super(new FixedBiomeSource(biome));
         this.map = map;
         this.biome = biome;
+    }
+
+    Layout layout() {
+        return map.layout();
+    }
+
+    boolean isMapFor(ServerLevel level) {
+        return level.dimension().identifier().equals(MagicRpg.id(map.name));
     }
 
     @Override
@@ -128,7 +144,8 @@ public final class AuthoredIsland extends ChunkGenerator {
 
     @Override
     public void spawnOriginalMobs(WorldGenRegion region) {
-        if (map != MapData.MEADOWS) {
+        if (map == MapData.GOLDENWOOD
+            || (map == MapData.IRON_WASTELANDS && region.getDifficulty() == Difficulty.PEACEFUL)) {
             return;
         }
         var tile = map.layout().tiles().get(region.getCenter().pack());
@@ -144,6 +161,11 @@ public final class AuthoredIsland extends ChunkGenerator {
                 throw new IllegalStateException("Invalid island inhabitant " + fixture.id());
             }
             mob.snapTo(Vec3.atBottomCenterOf(fixture.pos()), 0, 0);
+            if (map == MapData.IRON_WASTELANDS) {
+                WastelandBattle.prepare(mob, region, EntitySpawnReason.CHUNK_GENERATION);
+                region.addFreshEntity(mob);
+                continue;
+            }
             mob.setPersistenceRequired();
             if (mob instanceof MeadowPaladin paladin) {
                 paladin.guard(fixture.pos());
@@ -180,18 +202,21 @@ public final class AuthoredIsland extends ChunkGenerator {
             for (int column = 0; column < tile.columns().length; column++) {
                 int x = column & 15;
                 int z = column >> 4;
-                byte[] runs = tile.columns()[column];
+                int[] runs = tile.columns()[column];
                 for (int i = 0; i < runs.length; i += 3) {
-                    int start = Byte.toUnsignedInt(runs[i]);
-                    int end = start + Byte.toUnsignedInt(runs[i + 1]);
-                    var state = layout.palette()[Byte.toUnsignedInt(runs[i + 2])];
+                    int start = runs[i];
+                    int end = start + runs[i + 1];
+                    var state = layout.palette()[runs[i + 2]];
                     for (int y = start; y < end; y++) {
                         chunk.setBlockState(cursor.set(pos.getBlockX(x), y, pos.getBlockZ(z)), state);
                     }
                 }
             }
             for (var fixture : tile.fixtures()) {
-                fixture.install(chunk);
+                fixture.install(chunk, region.registryAccess(), map == MapData.MEADOWS);
+            }
+            for (var tag : tile.blockEntities()) {
+                chunk.setBlockEntityNbt(tag.copy());
             }
         }
         Heightmap.primeHeightmaps(chunk, TERRAIN_HEIGHTMAPS);
@@ -203,8 +228,8 @@ public final class AuthoredIsland extends ChunkGenerator {
         var layout = map.layout();
         var runs = layout.column(x, z);
         for (int i = runs.length - 3; i >= 0; i -= 3) {
-            if (type.isOpaque().test(layout.palette()[Byte.toUnsignedInt(runs[i + 2])])) {
-                return Byte.toUnsignedInt(runs[i]) + Byte.toUnsignedInt(runs[i + 1]);
+            if (type.isOpaque().test(layout.palette()[runs[i + 2]])) {
+                return runs[i] + runs[i + 1];
             }
         }
         return level.getMinY();
@@ -217,9 +242,8 @@ public final class AuthoredIsland extends ChunkGenerator {
         var states = new BlockState[HEIGHT];
         Arrays.fill(states, Blocks.AIR.defaultBlockState());
         for (int i = 0; i < runs.length; i += 3) {
-            int start = Byte.toUnsignedInt(runs[i]);
-            Arrays.fill(states, start, start + Byte.toUnsignedInt(runs[i + 1]),
-                layout.palette()[Byte.toUnsignedInt(runs[i + 2])]);
+            int start = runs[i];
+            Arrays.fill(states, start, start + runs[i + 1], layout.palette()[runs[i + 2]]);
         }
         return new NoiseColumn(0, states);
     }
@@ -242,12 +266,16 @@ public final class AuthoredIsland extends ChunkGenerator {
         return nearest != null ? nearest : super.findNearestMapStructure(level, structures, origin, radius, skipKnown);
     }
 
-    private record Fixture(BlockPos pos, Identifier id) {
-        private void install(ChunkAccess chunk) {
+    record Fixture(BlockPos pos, Identifier id) {
+        private void install(ChunkAccess chunk, HolderLookup.Provider registries, boolean city) {
             var state = chunk.getBlockState(pos);
             if (state.is(Blocks.SPAWNER)) {
                 var spawner = new SpawnerBlockEntity(pos, state);
-                spawner.setEntityId(BuiltInRegistries.ENTITY_TYPE.getValue(id), RandomSource.create(pos.asLong()));
+                if (city) {
+                    configureCitySpawner(spawner, registries);
+                } else {
+                    spawner.setEntityId(BuiltInRegistries.ENTITY_TYPE.getValue(id), RandomSource.create(pos.asLong()));
+                }
                 chunk.setBlockEntity(spawner);
             } else if (state.getBlock() instanceof EntityBlock block
                 && block.newBlockEntity(pos, state) instanceof RandomizableContainerBlockEntity container) {
@@ -257,16 +285,88 @@ public final class AuthoredIsland extends ChunkGenerator {
                 throw new IllegalStateException("Invalid island fixture at " + pos);
             }
         }
+
+        private void configureCitySpawner(SpawnerBlockEntity spawner, HolderLookup.Provider registries) {
+            var entity = new CompoundTag();
+            entity.putString("id", id.toString());
+            entity.putLong("Station", pos.asLong());
+            var spawnData = new CompoundTag();
+            spawnData.put("entity", entity);
+            var settings = new CompoundTag();
+            settings.put("SpawnData", spawnData);
+            settings.putShort("Delay", (short) (30 + RandomSource.create(pos.asLong()).nextInt(31)));
+            settings.putInt("MinSpawnDelay", 100);
+            settings.putInt("MaxSpawnDelay", 240);
+            settings.putInt("SpawnCount", 4);
+            settings.putInt("MaxNearbyEntities", 7);
+            settings.putInt("SpawnRange", 6);
+            // Load before attaching the spawner: a live level would look up the chunk being generated.
+            spawner.loadCustomOnly(TagValueInput.create(ProblemReporter.DISCARDING, registries, settings));
+        }
     }
 
-    private record Tile(byte[][] columns, Fixture[] fixtures) {}
+    record Tile(int[][] columns, List<Fixture> fixtures, List<CompoundTag> blockEntities) {
+        static final int[] EMPTY_COLUMN = new int[0];
+    }
 
-    private record Layout(BlockState[] palette, Map<Long, Tile> tiles, Map<Identifier, BlockPos> landmarks) {
-        private static final byte[] EMPTY_COLUMN = new byte[0];
-        private static final int FORMAT = 0x47574931; // GWI1
-        private byte[] column(int x, int z) {
+    record Layout(BlockState[] palette, Map<Long, Tile> tiles, Map<Identifier, BlockPos> landmarks) {
+        private static final int LEGACY_FORMAT = 0x47574931; // GWI1
+        private static final int FORMAT = 0x47574932; // GWI2
+
+        private int[] column(int x, int z) {
             var tile = tiles.get(ChunkPos.pack(x >> 4, z >> 4));
-            return tile == null ? EMPTY_COLUMN : tile.columns()[(z & 15) * 16 + (x & 15)];
+            return tile == null ? Tile.EMPTY_COLUMN : tile.columns()[(z & 15) * 16 + (x & 15)];
+        }
+
+        BlockState stateAt(BlockPos pos) {
+            var runs = column(pos.getX(), pos.getZ());
+            for (int i = 0; i < runs.length && runs[i] <= pos.getY(); i += 3) {
+                if (pos.getY() < runs[i] + runs[i + 1]) {
+                    return palette[runs[i + 2]];
+                }
+            }
+            return Blocks.AIR.defaultBlockState();
+        }
+
+        void write(DataOutputStream output) throws IOException {
+            output.writeInt(FORMAT);
+            output.writeShort(palette.length);
+            for (var state : palette) {
+                output.writeUTF(BlockStateParser.serialize(state));
+            }
+            output.writeByte(landmarks.size());
+            for (var id : landmarks.keySet().stream().sorted().toList()) {
+                var pos = landmarks.get(id);
+                output.writeUTF(id.toString());
+                output.writeShort(pos.getX());
+                output.writeByte(pos.getY());
+                output.writeShort(pos.getZ());
+            }
+            output.writeShort(tiles.size());
+            for (long key : tiles.keySet().stream().sorted().toList()) {
+                var tile = tiles.get(key);
+                output.writeShort(ChunkPos.getX(key));
+                output.writeShort(ChunkPos.getZ(key));
+                for (var runs : tile.columns()) {
+                    output.writeByte(runs.length / 3);
+                    for (int i = 0; i < runs.length; i += 3) {
+                        output.writeByte(runs[i]);
+                        output.writeByte(runs[i + 1]);
+                        output.writeShort(runs[i + 2]);
+                    }
+                }
+                output.writeByte(tile.fixtures().size());
+                for (var fixture : tile.fixtures()) {
+                    output.writeByte(fixture.pos().getX() & 15);
+                    output.writeByte(fixture.pos().getY());
+                    output.writeByte(fixture.pos().getZ() & 15);
+                    output.writeUTF(fixture.id().toString());
+                }
+                output.writeShort(tile.blockEntities().size());
+                for (var tag : tile.blockEntities()) {
+                    NbtIo.write(tag, output);
+                }
+            }
         }
 
         private static Layout read(String resource) {
@@ -275,7 +375,8 @@ public final class AuthoredIsland extends ChunkGenerator {
                     throw new IOException("Missing " + resource);
                 }
                 try (var input = new DataInputStream(new GZIPInputStream(stream))) {
-                    if (input.readInt() != FORMAT) {
+                    int format = input.readInt();
+                    if (format != LEGACY_FORMAT && format != FORMAT) {
                         throw new IOException("Unknown island format");
                     }
                     var palette = new BlockState[input.readUnsignedShort()];
@@ -293,20 +394,39 @@ public final class AuthoredIsland extends ChunkGenerator {
                     for (int i = 0; i < tileCount; i++) {
                         int x = input.readShort();
                         int z = input.readShort();
-                        var columns = new byte[256][];
+                        var columns = new int[COLUMNS_PER_TILE][];
                         for (int column = 0; column < columns.length; column++) {
                             int size = input.readUnsignedByte() * 3;
-                            columns[column] = size == 0 ? EMPTY_COLUMN : new byte[size];
-                            input.readFully(columns[column]);
+                            var runs = size == 0 ? Tile.EMPTY_COLUMN : new int[size];
+                            int end = 0;
+                            for (int run = 0; run < size; run += 3) {
+                                int start = input.readUnsignedByte();
+                                int length = input.readUnsignedByte();
+                                int state = format == LEGACY_FORMAT ? input.readUnsignedByte() : input.readUnsignedShort();
+                                if (start < end || length == 0 || start + length > HEIGHT || state >= palette.length) {
+                                    throw new IOException("Invalid island block run");
+                                }
+                                runs[run] = start;
+                                runs[run + 1] = length;
+                                runs[run + 2] = state;
+                                end = start + length;
+                            }
+                            columns[column] = runs;
                         }
-                        var fixtures = new Fixture[input.readUnsignedByte()];
-                        for (int fixture = 0; fixture < fixtures.length; fixture++) {
+                        int fixtureCount = input.readUnsignedByte();
+                        var fixtures = new ArrayList<Fixture>(fixtureCount);
+                        for (int fixture = 0; fixture < fixtureCount; fixture++) {
                             int blockX = x * 16 + input.readUnsignedByte();
                             int y = input.readUnsignedByte();
                             int blockZ = z * 16 + input.readUnsignedByte();
-                            fixtures[fixture] = new Fixture(new BlockPos(blockX, y, blockZ), Identifier.parse(input.readUTF()));
+                            fixtures.add(new Fixture(new BlockPos(blockX, y, blockZ), Identifier.parse(input.readUTF())));
                         }
-                        tiles.put(ChunkPos.pack(x, z), new Tile(columns, fixtures));
+                        int blockEntityCount = format == FORMAT ? input.readUnsignedShort() : 0;
+                        var blockEntities = new ArrayList<CompoundTag>(blockEntityCount);
+                        for (int blockEntity = 0; blockEntity < blockEntityCount; blockEntity++) {
+                            blockEntities.add(NbtIo.read(input, NbtAccounter.unlimitedHeap()));
+                        }
+                        tiles.put(ChunkPos.pack(x, z), new Tile(columns, List.copyOf(fixtures), List.copyOf(blockEntities)));
                     }
                     if (input.read() != -1) {
                         throw new IOException("Unexpected data after island map");

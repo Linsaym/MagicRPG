@@ -35,12 +35,19 @@ public final class MeadowPaladin extends PathfinderMob {
     public static final int STUCK = 4;
     public static final int RECOVER = 5;
     public static final int RESONANCE = 6;
-    public static final int SWEEP_WINDUP = 25;
-    public static final int OVERHEAD_WINDUP = 33;
-    public static final int STUCK_DURATION = 42;
-    public static final int RECOVERY_DURATION = 15;
-    public static final int RESONANCE_WINDUP = 40;
-    private static final double RING_INNER = 3.2;
+    public static final int SIGIL = 7;
+    public static final int SWEEP_WINDUP = 17;
+    public static final int OVERHEAD_WINDUP = 25;
+    public static final int STUCK_DURATION = 24;
+    public static final int RECOVERY_DURATION = 9;
+    public static final int RESONANCE_WINDUP = 37;
+    public static final int SIGIL_WINDUP = 30;
+    private static final int REGENERATION_INTERVAL = 40;
+    private static final double SWEEP_REACH = 6.2;
+    private static final double SWEEP_HALF_ANGLE = Math.toRadians(109);
+    private static final double CLEAVE_REACH = 8.5;
+    private static final double CLEAVE_HALF_WIDTH = 1.85;
+    private static final double SIGIL_RADIUS = 3.4;
     private static final double RING_OUTER = 8.0;
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(
         MeadowPaladin.class, EntityDataSerializers.INT);
@@ -50,9 +57,11 @@ public final class MeadowPaladin extends PathfinderMob {
     private @Nullable BlockPos post;
     private final ServerBossEvent bossBar = new ServerBossEvent(UUID.randomUUID(), getType().getDescription(),
         BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
-    private boolean overheadNext;
-    private int strikesUntilResonance;
+    private int lastAttack;
+    private int resonanceCooldown;
+    private int sigilCooldown;
     private float attackYaw;
+    private Vec3 sigilCenter = Vec3.ZERO;
 
     public MeadowPaladin(EntityType<? extends MeadowPaladin> type, Level level) {
         super(type, level);
@@ -62,14 +71,14 @@ public final class MeadowPaladin extends PathfinderMob {
     }
 
     public static AttributeSupplier.Builder attributes() {
-        return createMobAttributes().add(Attributes.MAX_HEALTH, 150).add(Attributes.MOVEMENT_SPEED, 0.27)
-            .add(Attributes.ARMOR, 8).add(Attributes.KNOCKBACK_RESISTANCE, 1)
+        return createMobAttributes().add(Attributes.MAX_HEALTH, 250).add(Attributes.MOVEMENT_SPEED, .33)
+            .add(Attributes.ARMOR, 12).add(Attributes.KNOCKBACK_RESISTANCE, 1)
             .add(Attributes.FOLLOW_RANGE, 36);
     }
 
     public void guard(BlockPos pos) {
         post = pos;
-        setHomeTo(pos, 16);
+        setHomeTo(pos, 24);
     }
 
     @Override
@@ -132,6 +141,11 @@ public final class MeadowPaladin extends PathfinderMob {
             guard(blockPosition());
         }
         int phase = phase();
+        resonanceCooldown = Math.max(0, resonanceCooldown - 1);
+        sigilCooldown = Math.max(0, sigilCooldown - 1);
+        if (tickCount % REGENERATION_INTERVAL == 0 && isAlive() && getHealth() < getMaxHealth()) {
+            heal(1.0F);
+        }
         bossBar.setProgress(getHealth() / getMaxHealth());
         bossBar.setVisible(phase != GUARD && (getTarget() != null || phase >= SWEEP));
         if (phase >= SWEEP) {
@@ -139,12 +153,12 @@ public final class MeadowPaladin extends PathfinderMob {
             return;
         }
         var target = getTarget();
-        if (target instanceof ServerPlayer player && !inGuardZone(player, false)) {
+        if (target != null && (!(target instanceof ServerPlayer player) || !inGuardZone(player, false))) {
             setTarget(null);
             target = null;
         }
         if (target == null && level.getDifficulty() != Difficulty.PEACEFUL) {
-            var nearby = level.getEntitiesOfClass(ServerPlayer.class, new AABB(post).inflate(18),
+            var nearby = level.getEntitiesOfClass(ServerPlayer.class, new AABB(post).inflate(24),
                 player -> inGuardZone(player, true) && hasLineOfSight(player));
             for (var player : nearby) {
                 if (target == null || distanceToSqr(player) < distanceToSqr(target)) {
@@ -175,20 +189,10 @@ public final class MeadowPaladin extends PathfinderMob {
             return;
         }
         lookAt(target, 30, 10);
-        if (distanceToSqr(target) <= 24 && hasLineOfSight(target)) {
+        double distance = target.position().distanceTo(position());
+        if (target instanceof ServerPlayer player && distance <= 18 && hasLineOfSight(player)
+            && startAttack(player, distance)) {
             getNavigation().stop();
-            attackYaw = (float) (Mth.atan2(target.getZ() - getZ(), target.getX() - getX()) * Mth.RAD_TO_DEG) - 90;
-            face(attackYaw);
-            if (getHealth() <= getMaxHealth() / 2 && strikesUntilResonance == 0) {
-                enter(RESONANCE);
-                strikesUntilResonance = 2;
-                playSound(SoundEvents.WARDEN_SONIC_CHARGE, 1, 1.2F);
-            } else {
-                enter(overheadNext ? OVERHEAD : SWEEP);
-                overheadNext = !overheadNext;
-                strikesUntilResonance = Math.max(0, strikesUntilResonance - 1);
-                playSound(SoundEvents.IRON_GOLEM_REPAIR, 1, .65F);
-            }
         } else {
             if (phase != ADVANCE) {
                 enter(ADVANCE);
@@ -206,8 +210,37 @@ public final class MeadowPaladin extends PathfinderMob {
         double x = player.getX() - post.getX() - .5;
         double y = player.getY() - post.getY();
         double z = player.getZ() - post.getZ() - .5;
-        return Math.abs(x) <= (starting ? 13 : 16) && y >= -2 && y <= (starting ? 3 : 5)
-            && z >= -7 && z <= (starting ? 12 : 15);
+        return Math.abs(x) <= (starting ? 17 : 20) && y >= -2 && y <= 5
+            && z >= -9 && z <= (starting ? 16 : 19);
+    }
+
+    private boolean startAttack(ServerPlayer target, double distance) {
+        int attack;
+        if (distance <= 7 && resonanceCooldown == 0 && getHealth() <= getMaxHealth() / 2
+            && (lastAttack != RESONANCE && getRandom().nextInt(3) == 0)) {
+            attack = RESONANCE;
+            resonanceCooldown = 100;
+        } else if (sigilCooldown == 0 && (distance > 7 || distance > 4 && getRandom().nextInt(4) == 0)) {
+            attack = SIGIL;
+            sigilCenter = target.position();
+            sigilCooldown = 70;
+        } else if (distance <= 7) {
+            attack = distance < 2.8 ? SWEEP : distance > 5.5 ? OVERHEAD
+                : getRandom().nextBoolean() ? SWEEP : OVERHEAD;
+        } else {
+            return false;
+        }
+        aimAt(target);
+        face(attackYaw);
+        lastAttack = attack;
+        enter(attack);
+        playSound(attack == RESONANCE || attack == SIGIL ? SoundEvents.WARDEN_SONIC_CHARGE
+            : SoundEvents.IRON_GOLEM_REPAIR, 1, attack == SIGIL ? 1.45F : .75F);
+        return true;
+    }
+
+    private void aimAt(ServerPlayer target) {
+        attackYaw = (float) (Mth.atan2(target.getZ() - getZ(), target.getX() - getX()) * Mth.RAD_TO_DEG) - 90;
     }
 
     private void face(float yaw) {
@@ -218,13 +251,26 @@ public final class MeadowPaladin extends PathfinderMob {
 
     private void tickAttack(ServerLevel level, int phase) {
         getNavigation().stop();
-        face(attackYaw);
         int elapsed = phaseTick() + 1;
+        if (getTarget() instanceof ServerPlayer player && inGuardZone(player, false) && hasLineOfSight(player)) {
+            if (phase == SWEEP && elapsed <= SWEEP_WINDUP - 6
+                || phase == OVERHEAD && elapsed <= OVERHEAD_WINDUP - 8) {
+                aimAt(player);
+            } else if (phase == SIGIL && elapsed <= SIGIL_WINDUP - 16) {
+                sigilCenter = player.position();
+                aimAt(player);
+            }
+        }
+        face(attackYaw);
         entityData.set(PHASE_TICK, elapsed);
-        if (elapsed % 5 == 0) {
+        boolean lockedOnThisTick = (phase == SWEEP && elapsed == SWEEP_WINDUP - 6)
+            || (phase == OVERHEAD && elapsed == OVERHEAD_WINDUP - 8)
+            || (phase == SIGIL && elapsed == SIGIL_WINDUP - 16);
+        if (elapsed == 1 || elapsed % 4 == 0 || lockedOnThisTick) {
             if (phase == RESONANCE) {
-                ring(level, RING_INNER, false);
-                ring(level, RING_OUTER, false);
+                ring(level, position(), RING_OUTER, false);
+            } else if (phase == SIGIL) {
+                ring(level, sigilCenter, SIGIL_RADIUS, false);
             } else if (phase == OVERHEAD || phase == SWEEP) {
                 markStrike(level, phase == OVERHEAD);
             }
@@ -236,8 +282,11 @@ public final class MeadowPaladin extends PathfinderMob {
             strike(level, true);
             enter(STUCK);
         } else if (phase == RESONANCE && elapsed == RESONANCE_WINDUP) {
-            releaseResonance(level);
+            releaseCircle(level, position(), RING_OUTER, 14);
             enter(STUCK);
+        } else if (phase == SIGIL && elapsed == SIGIL_WINDUP) {
+            releaseCircle(level, sigilCenter, SIGIL_RADIUS, 13);
+            enter(RECOVER);
         } else if ((phase == STUCK && elapsed >= STUCK_DURATION)
             || (phase == RECOVER && elapsed >= RECOVERY_DURATION)) {
             enter(ADVANCE);
@@ -249,13 +298,13 @@ public final class MeadowPaladin extends PathfinderMob {
         Vec3 side = new Vec3(-forward.z, 0, forward.x);
         for (int i = 0; i <= 10; i++) {
             if (overhead) {
-                Vec3 point = position().add(forward.scale(.6 * i));
-                mark(level, point.add(side.scale(1.25)));
-                mark(level, point.add(side.scale(-1.25)));
+                Vec3 point = position().add(forward.scale(CLEAVE_REACH * i / 10));
+                mark(level, point.add(side.scale(CLEAVE_HALF_WIDTH)));
+                mark(level, point.add(side.scale(-CLEAVE_HALF_WIDTH)));
             } else {
-                double angle = (i - 5) * Math.acos(.13) / 5;
-                mark(level, position().add(forward.scale(5.5 * Math.cos(angle)))
-                    .add(side.scale(5.5 * Math.sin(angle))));
+                double angle = (i - 5) * SWEEP_HALF_ANGLE / 5;
+                mark(level, position().add(forward.scale(SWEEP_REACH * Math.cos(angle)))
+                    .add(side.scale(SWEEP_REACH * Math.sin(angle))));
             }
         }
     }
@@ -264,31 +313,32 @@ public final class MeadowPaladin extends PathfinderMob {
         level.sendParticles(ParticleTypes.WITCH, point.x, point.y + .22, point.z, 1, 0, 0, 0, 0);
     }
 
-    private void ring(ServerLevel level, double radius, boolean impact) {
-        for (int i = 0; i < 32; i++) {
-            double angle = i * Math.TAU / 32;
+    private void ring(ServerLevel level, Vec3 center, double radius, boolean impact) {
+        int points = Math.max(12, (int) (4 * radius));
+        for (int i = 0; i < points; i++) {
+            double angle = i * Math.TAU / points;
             level.sendParticles(impact ? ParticleTypes.REVERSE_PORTAL : ParticleTypes.WITCH,
-                getX() + radius * Math.cos(angle), getY() + .24, getZ() + radius * Math.sin(angle),
+                center.x + radius * Math.cos(angle), center.y + .24, center.z + radius * Math.sin(angle),
                 impact ? 3 : 1, .07, .02, .07, impact ? .08 : 0);
         }
     }
 
-    private void releaseResonance(ServerLevel level) {
+    private void releaseCircle(ServerLevel level, Vec3 center, double radius, float damage) {
         playSound(SoundEvents.WARDEN_SONIC_BOOM, 1.2F, .85F);
-        for (double radius = RING_INNER; radius <= RING_OUTER; radius += 1.2) {
-            ring(level, radius, true);
+        for (int band = 1; band <= 3; band++) {
+            ring(level, center, radius * band / 3, true);
         }
         if (level.getDifficulty() == Difficulty.PEACEFUL) {
             return;
         }
         var source = damageSources().indirectMagic(this, this);
-        for (var player : level.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(RING_OUTER, 1, RING_OUTER),
-            player -> canAttack(player) && !player.isCreative() && hasLineOfSight(player)
-                && Math.abs(player.getY() - getY()) <= 2)) {
-            Vec3 offset = player.position().subtract(position()).multiply(1, 0, 1);
-            double distance = offset.horizontalDistance();
-            if (distance >= RING_INNER && distance <= RING_OUTER && player.hurtServer(level, source, 10)) {
-                player.knockback(.7, -offset.x, -offset.z, source, 10);
+        var bounds = new AABB(center.x - radius, center.y - 3, center.z - radius,
+            center.x + radius, center.y + 3, center.z + radius);
+        for (var player : level.getEntitiesOfClass(ServerPlayer.class, bounds,
+            player -> inGuardZone(player, false) && hasLineOfSight(player))) {
+            Vec3 offset = player.position().subtract(center);
+            if (offset.horizontalDistanceSqr() <= radius * radius && player.hurtServer(level, source, damage)) {
+                player.knockback(.7, -offset.x, -offset.z, source, damage);
             }
         }
     }
@@ -306,17 +356,17 @@ public final class MeadowPaladin extends PathfinderMob {
             return;
         }
         var source = damageSources().mobAttack(this);
-        for (var player : level.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(6, 2.5, 6),
-            player -> canAttack(player) && !player.isCreative() && Math.abs(player.getY() - getY()) <= 2.5
-                && hasLineOfSight(player))) {
+        for (var player : level.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(CLEAVE_REACH, 3, CLEAVE_REACH),
+            player -> inGuardZone(player, false) && Math.abs(player.getY() - getY()) <= 3 && hasLineOfSight(player))) {
             Vec3 offset = player.position().subtract(position()).multiply(1, 0, 1);
             double reach = offset.dot(forward);
             double side = Math.abs(offset.x * forward.z - offset.z * forward.x);
-            boolean hit = overhead ? reach > 0 && reach <= 6 && side < 1.25
-                : offset.lengthSqr() <= 30.25 && offset.normalize().dot(forward) >= .13;
-            if (hit && player.hurtServer(level, source, overhead ? 15 : 10)) {
-                player.knockback(overhead ? .35 : .8, -offset.x, -offset.z, source,
-                    overhead ? 15 : 10);
+            boolean hit = overhead ? reach >= 0 && reach <= CLEAVE_REACH && side <= CLEAVE_HALF_WIDTH
+                : offset.lengthSqr() <= SWEEP_REACH * SWEEP_REACH
+                    && offset.normalize().dot(forward) >= Math.cos(SWEEP_HALF_ANGLE);
+            float damage = overhead ? 19 : 14;
+            if (hit && player.hurtServer(level, source, damage)) {
+                player.knockback(overhead ? .45 : .9, -offset.x, -offset.z, source, damage);
             }
         }
     }

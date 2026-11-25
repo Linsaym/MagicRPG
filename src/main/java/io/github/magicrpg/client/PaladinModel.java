@@ -6,6 +6,7 @@ import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
@@ -86,9 +87,10 @@ final class PaladinModel extends EntityModel<PaladinModel.State> {
                 PartPose.offset(side * 16, -5, 0));
 
             var leg = cube(CubeListBuilder.create(), DARK, -5, 0, -4, 10, 30, 8);
-            cube(leg, LIGHT, -5, 14, -5, 10, 20, 9);
+            // Separate the overlapping side and back faces without changing the UVs.
+            leg.texOffs(LIGHT * 128, 0).addBox(-5, 14, -5, 10, 20, 9, new CubeDeformation(.125F, 0, .125F));
             cube(leg, TRIM, -4, 13, -6, 8, 5, 2);
-            cube(leg, DARK, -5, 29, -8, 10, 6, 13);
+            leg.texOffs(DARK * 128, 0).addBox(-5, 29, -8, 10, 6, 13, new CubeDeformation(.25F, 0, 0));
             root.addOrReplaceChild(side < 0 ? "right_leg" : "left_leg", leg,
                 PartPose.offset(side * 6, -11, 0));
         }
@@ -136,15 +138,13 @@ final class PaladinModel extends EntityModel<PaladinModel.State> {
         super.setupAnim(state);
         float time = state.phaseTime;
         Pose pose = switch (state.phase) {
-            case MeadowPaladin.SWEEP -> time < 20 ? READY.to(SIDE, time / 20)
-                : SIDE.to(ACROSS, (time - 20) / (MeadowPaladin.SWEEP_WINDUP - 20));
-            case MeadowPaladin.OVERHEAD -> time < 27 ? READY.to(RAISED, time / 23)
-                : RAISED.to(EMBEDDED, (time - 27) / (MeadowPaladin.OVERHEAD_WINDUP - 27));
-            case MeadowPaladin.RESONANCE -> time < 32 ? READY.to(RAISED, time / 18)
-                : RAISED.to(EMBEDDED, (time - 32) / (MeadowPaladin.RESONANCE_WINDUP - 32));
+            case MeadowPaladin.SWEEP -> windup(time, 12, MeadowPaladin.SWEEP_WINDUP, SIDE, ACROSS);
+            case MeadowPaladin.OVERHEAD -> windup(time, 18, MeadowPaladin.OVERHEAD_WINDUP, RAISED, EMBEDDED);
+            case MeadowPaladin.RESONANCE -> windup(time, 28, MeadowPaladin.RESONANCE_WINDUP, RAISED, EMBEDDED);
+            case MeadowPaladin.SIGIL -> windup(time, 23, MeadowPaladin.SIGIL_WINDUP, RAISED, ACROSS);
             case MeadowPaladin.RECOVER -> ACROSS.to(READY, time / MeadowPaladin.RECOVERY_DURATION);
-            case MeadowPaladin.STUCK -> time < 32 ? EMBEDDED
-                : EMBEDDED.to(READY, (time - 32) / (MeadowPaladin.STUCK_DURATION - 32));
+            case MeadowPaladin.STUCK -> time < 15 ? EMBEDDED
+                : EMBEDDED.to(READY, (time - 15) / (MeadowPaladin.STUCK_DURATION - 15));
             case MeadowPaladin.ADVANCE -> READY;
             default -> REST;
         };
@@ -163,6 +163,11 @@ final class PaladinModel extends EntityModel<PaladinModel.State> {
         sword.xRot = pose.blade;
         reach(rightArm, pose, -6);
         reach(leftArm, pose, 3);
+    }
+
+    private static Pose windup(float time, int hold, int end, Pose raised, Pose impact) {
+        return time < hold ? READY.to(raised, time / hold)
+            : raised.to(impact, (time - hold) / (end - hold));
     }
 
     private static void reach(ModelPart arm, Pose pose, float gripOffset) {

@@ -112,7 +112,12 @@ public final class LinkedPortalBlock extends Block implements Portal {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (random.nextInt(3) == 0) {
-            level.addParticle(route == PortalRoute.GOLDENWOOD ? ParticleTypes.WAX_ON : ParticleTypes.END_ROD, pos.getX() + random.nextDouble(), pos.getY() + random.nextDouble(),
+            var particle = switch (route) {
+                case GOLDENWOOD -> ParticleTypes.WAX_ON;
+                case MEADOWS -> ParticleTypes.END_ROD;
+                case IRON_WASTELANDS -> ParticleTypes.ASH;
+            };
+            level.addParticle(particle, pos.getX() + random.nextDouble(), pos.getY() + random.nextDouble(),
                 pos.getZ() + random.nextDouble(), 0, 0.025, 0);
         }
     }

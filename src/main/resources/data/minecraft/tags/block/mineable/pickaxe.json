@@ -2,6 +2,10 @@
   "values": [
     "magicrpg:white_stone",
     "magicrpg:honeystone",
-    "magicrpg:honeystone_bricks"
+    "magicrpg:honeystone_bricks",
+    "magicrpg:ancient_crystals",
+    "magicrpg:rusted_iron",
+    "magicrpg:metal_plates",
+    "magicrpg:iron_rubble"
   ]
 }

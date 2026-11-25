@@ -1,12 +1,21 @@
 package io.github.magicrpg.client;
 
 import io.github.magicrpg.Goldenwood;
+import io.github.magicrpg.IronWastelands;
 import io.github.magicrpg.MagicRpg;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.IronGolemRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.client.renderer.entity.WanderingTraderRenderer;
+import net.minecraft.client.renderer.entity.state.VillagerRenderState;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
 @EventBusSubscriber(modid = MagicRpg.ID, value = Dist.CLIENT)
 public final class ClientRegistration {
@@ -24,6 +33,12 @@ public final class ClientRegistration {
             event.registerLayerDefinition(shape.layer, () -> CitySentryModel.createLayer(shape));
         }
         event.registerLayerDefinition(ChalkGuardianModel.LAYER, ChalkGuardianModel::createLayer);
+        event.registerLayerDefinition(IronColossusModel.LAYER, IronColossusModel::createLayer);
+        event.registerLayerDefinition(WastelandGiantModel.TITAN, WastelandGiantModel::createLayer);
+        for (var layers : WastelandZombieLayers.values()) {
+            event.registerLayerDefinition(layers.adult, layers::adultLayer);
+            event.registerLayerDefinition(layers.baby, layers::babyLayer);
+        }
     }
 
     @SubscribeEvent
@@ -49,5 +64,39 @@ public final class ClientRegistration {
         event.registerEntityRenderer(MagicRpg.BURIED_WORKER.get(),
             context -> new CitySentryRenderer(context, CitySentryModel.Shape.WORKER));
         event.registerEntityRenderer(MagicRpg.CHALK_GUARDIAN.get(), ChalkGuardianRenderer::new);
+        event.registerEntityRenderer(MagicRpg.ANCIENT_MERCHANT.get(), AncientMerchantRenderer::new);
+        event.registerEntityRenderer(IronWastelands.IRON_COLOSSUS.get(), context -> new WastelandGiantRenderer(context, true));
+        event.registerEntityRenderer(IronWastelands.LARGE_IRON_GOLEM.get(), IronGolemRenderer::new);
+        event.registerEntityRenderer(IronWastelands.FLESH_TITAN.get(), context -> new WastelandGiantRenderer(context, false));
+        event.registerEntityRenderer(IronWastelands.HOLLOWED.get(),
+            context -> new WastelandZombieRenderer(context, WastelandZombieLayers.HOLLOWED));
+        event.registerEntityRenderer(IronWastelands.ZOMBIE_THAUMATURGE.get(),
+            context -> new WastelandZombieRenderer(context, WastelandZombieLayers.THAUMATURGE));
+    }
+
+    @SubscribeEvent
+    public static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(MagicRpg.ARMOR_POUCH_MENU.get(), ArmorPouchScreen::new);
+    }
+
+    @SubscribeEvent
+    public static void registerEquipment(RegisterClientExtensionsEvent event) {
+        event.registerItem(new LilacArmorModel.Extension(EquipmentSlot.HEAD), MagicRpg.LILAC_HELMET.get());
+        event.registerItem(new LilacArmorModel.Extension(EquipmentSlot.CHEST), MagicRpg.LILAC_CHESTPLATE.get());
+        event.registerItem(new LilacArmorModel.Extension(EquipmentSlot.LEGS), MagicRpg.LILAC_LEGGINGS.get());
+        event.registerItem(new LilacArmorModel.Extension(EquipmentSlot.FEET), MagicRpg.LILAC_BOOTS.get());
+    }
+
+    private static final class AncientMerchantRenderer extends WanderingTraderRenderer {
+        private static final Identifier TEXTURE = MagicRpg.id("textures/entity/ancient_merchant.png");
+
+        private AncientMerchantRenderer(EntityRendererProvider.Context context) {
+            super(context);
+        }
+
+        @Override
+        public Identifier getTextureLocation(VillagerRenderState state) {
+            return TEXTURE;
+        }
     }
 }

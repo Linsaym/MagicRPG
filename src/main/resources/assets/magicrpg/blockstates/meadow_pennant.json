@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "magicrpg:block/meadow_pennant"
+    },
+    "facing=east": {
+      "model": "magicrpg:block/meadow_pennant",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "magicrpg:block/meadow_pennant",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "magicrpg:block/meadow_pennant",
+      "y": 270
+    }
+  }
+}

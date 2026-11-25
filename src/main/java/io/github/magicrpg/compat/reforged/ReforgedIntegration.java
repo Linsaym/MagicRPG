@@ -42,13 +42,21 @@ public final class ReforgedIntegration {
     public static void setup(FMLCommonSetupEvent event) {
         event.enqueueWork(ReforgedIntegration::registerResearchAndRecipe);
         GoldenwoodMagic.registerAspects();
+        IronWastelandsMagic.registerAspects();
         WayfarerMirrorMagic.registerAspects();
+        TimeTurnerMagic.registerAspects();
+        MeadowEquipmentMagic.registerAspects();
         AspectSync.addRegistrar(registry -> {
             registry.register(MagicRpg.FANG.get(), new AspectList().add(Aspect.BEAST, 2).add(Aspect.FIRE, 2));
             registry.register(MagicRpg.SEAL.get(), new AspectList()
                 .add(Aspect.FIRE, 2).add(Aspect.BEAST, 1).add(Aspect.MAGIC, 1));
             registry.register(MagicRpg.WHITE_STONE_ITEM.get(), new AspectList().add(Aspect.EARTH, 3).add(Aspect.ORDER, 1));
             registry.register(MagicRpg.LILAC_GRASS_ITEM.get(), new AspectList().add(Aspect.EARTH, 2).add(Aspect.PLANT, 1));
+            registry.register(MagicRpg.MEADOW_PENNANT_ITEM.get(), new AspectList().add(Aspect.CLOTH, 3).add(Aspect.ORDER, 1));
+            registry.register(MagicRpg.ANCIENT_CRYSTALS_ITEM.get(), new AspectList().add(Aspect.CRYSTAL, 4).add(Aspect.LIGHT, 2));
+            registry.register(MagicRpg.LILAC_LOG_ITEM.get(), new AspectList().add(Aspect.TREE, 3));
+            registry.register(MagicRpg.LILAC_LEAVES_ITEM.get(), new AspectList().add(Aspect.PLANT, 2));
+            registry.register(MagicRpg.LILAC_SAPLING_ITEM.get(), new AspectList().add(Aspect.PLANT, 2).add(Aspect.LIFE, 1));
             registry.register(MagicRpg.CHALK_HEART.get(), new AspectList().add(Aspect.EARTH, 4).add(Aspect.MAGIC, 2));
             registry.register(MagicRpg.ECHO_RIVET.get(), new AspectList().add(Aspect.METAL, 3).add(Aspect.MOTION, 2));
             registry.register(MagicRpg.OATH_CORE.get(), new AspectList().add(Aspect.MAGIC, 8).add(Aspect.ORDER, 6));
@@ -92,9 +100,12 @@ public final class ReforgedIntegration {
 
         diary(MEADOWS_RESEARCH, "magicrpg:white_stone", FANG_RESEARCH, 6, -2, Aspect.EARTH, Aspect.ORDER,
             page(MEADOWS_RESEARCH, 1), page(MEADOWS_RESEARCH, 2),
-            page(MEADOWS_RESEARCH, 3), page(MEADOWS_RESEARCH, 4), page(MEADOWS_RESEARCH, 5));
+            page(MEADOWS_RESEARCH, 3), page(MEADOWS_RESEARCH, 4), page(MEADOWS_RESEARCH, 5), page(MEADOWS_RESEARCH, 6));
+        TimeTurnerMagic.registerResearchAndRecipe();
+        MeadowEquipmentMagic.registerResearchAndRecipes();
         WayfarerMirrorMagic.registerResearchAndRecipes();
         GoldenwoodMagic.registerResearchAndRecipe();
+        IronWastelandsMagic.registerResearch();
     }
 
     static void diary(String key, String icon, String parent, int x, int y, Aspect first, Aspect second,

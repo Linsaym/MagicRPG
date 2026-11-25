@@ -26,6 +26,11 @@ BASALT = material("polished_basalt[axis=y]")
 DEEPSLATE = material("deepslate_tiles")
 PETALS = material("pink_petals[flower_amount=4]")
 PERCH = material("waxed_oxidized_cut_copper")
+MARBLE = material("quartz_bricks")
+PILLAR = material("quartz_pillar[axis=y]")
+GOLD = material("waxed_exposed_cut_copper")
+BOOKS = material("bookshelf")
+CARPET = material("purple_carpet")
 STAIRS = {
     direction: material(f"quartz_stairs[facing={direction}]")
     for direction in ("north", "south", "west", "east")
@@ -172,11 +177,13 @@ def house(cx, cz, workshop, front):
     depth = 4
     half = 6
     box(cx - half, 81, cz - depth, cx + half, 81, cz + depth, DARK)
-    box(cx - half, 82, cz - depth, cx + half, 87, cz + depth, WHITE)
+    box(cx - half, 82, cz - depth, cx + half, 87, cz + depth, MARBLE)
     box(cx - half + 1, 82, cz - depth + 1, cx + half - 1, 87, cz + depth - 1, AIR)
     for x in (cx - half, cx + half):
         for z in (cz - depth, cz + depth):
             box(x, 82, z, x, 88, z, WOOD)
+    box(cx - half, 87, cz - depth, cx + half, 87, cz - depth, GOLD)
+    box(cx - half, 87, cz + depth, cx + half, 87, cz + depth, GOLD)
     for x in (cx - 4, cx + 4):
         set_block(x, 85, cz - depth, material("orange_stained_glass"))
         set_block(x, 85, cz + depth, material("orange_stained_glass"))
@@ -197,6 +204,82 @@ def house(cx, cz, workshop, front):
     else:
         box(cx - 4, 82, cz - 2 * front, cx - 2, 82, cz - 2 * front, DARK)
         set_block(cx + 3, 82, cz - 2 * front, material("bookshelf"))
+
+
+def wing(side):
+    """A paired hall with a street entrance and a second stair back by the arena."""
+    near, far = sorted((side * 35, side * 50))
+    box(near, 88, -17, far, 104, 17, MARBLE)
+    box(near + 1, 89, -16, far - 1, 101, 16, AIR)
+    for x in range(near + 1, far):
+        for z in range(-16, 17):
+            local_x = abs(x)
+            floor = DEEPSLATE if local_x in (37, 48) or abs(z) in (6, 15) else PAVING
+            if local_x == 42 or z == 0:
+                floor = GOLD if local_x == 42 and z == 0 else PERCH
+            set_block(x, 88, z, floor)
+    for z in (-14, -7, 0, 7, 14):
+        for x in (side * 36, side * 49):
+            box(x, 89, z, x, 99, z, PILLAR)
+            box(x, 89, z - 1, x, 89, z + 1, DEEPSLATE)
+            set_block(x, 97, z + 1, LIGHT)
+        box(near + 1, 100, z, far - 1, 100, z, GOLD)
+        set_block(side * 42, 99, z, LIGHT)
+    for z in (-12, 12):
+        stairs(28 * side, z, 81, side, 0, 7, 5, 1, True)
+        lo, hi = sorted((side * 35, side * 37))
+        box(lo, 89, z - 2, hi, 93, z + 2, AIR)
+        box(lo, 94, z - 2, hi, 94, z + 2, GOLD)
+    if side < 0:
+        for offset in (-11, -5, 5, 11):
+            box(-47, 89, offset, -45, 95, offset, BOOKS)
+            set_block(-44, 90, offset, LANTERN)
+        box(-47, 89, -2, -45, 89, 2, DARK)
+        set_block(-46, 90, 0, material("lectern[facing=east]"))
+    else:
+        for z in (-8, 0, 8):
+            crystal(46, 89, z, 7 if z == 0 else 4, -1)
+            box(38, 89, z - 1, 39, 89, z + 1, DEEPSLATE)
+            set_block(39, 90, z, material("copper_bulb[lit=true]"))
+    FIXTURES[side * 40, 89, -8] = "magicrpg:city_stone_guard"
+    FIXTURES[side * 41, 89, 7] = "magicrpg:hollow_armor"
+
+
+def crypt():
+    box(-14, 64, -13, 14, 77, 10, MARBLE)
+    box(-13, 66, -12, 13, 76, 9, AIR)
+    for x in range(-13, 14):
+        for z in range(-12, 10):
+            floor = DEEPSLATE if abs(x) < 4 else PAVING
+            if abs(x) == 4 or z in (-10, 3, 8):
+                floor = PERCH
+            set_block(x, 65, z, floor)
+    for x in (-6, 6):
+        for z in (-10, -4, 2, 8):
+            box(x, 66, z, x, 73, z, PILLAR)
+            set_block(x, 74, z, GOLD)
+            box(-6, 75, z, 6, 75, z, MARBLE)
+            set_block(0, 74, z, LIGHT)
+        for z in (-7, -1, 5):
+            box(x - 1, 66, z - 1, x + 1, 66, z + 1, DEEPSLATE)
+            box(x, 67, z - 1, x, 67, z + 1, GOLD)
+            set_block(x, 68, z, AMETHYST)
+    for x in (-4, 4):
+        stairs(x, 24, 81, 0, -1, 16, 3, -1, True)
+        set_block(x, 82, 25, LIGHT)
+        for z in (12, 17, 22):
+            y = 81 - (24 - z)
+            marker = x + (2 if x > 0 else -2)
+            box(marker, y + 1, z, marker, y + 3, z, PILLAR)
+            set_block(marker, y + 4, z, LANTERN)
+    for z in range(-10, 8):
+        set_block(0, 66, z, CARPET)
+    box(-3, 66, -12, 3, 69, -11, PILLAR)
+    box(-2, 67, -10, 2, 71, -10, AMETHYST)
+    set_block(0, 70, -9, LIGHT)
+    chest(0, 66, -9, "south", "meadow_crypt")
+    FIXTURES[-9, 66, -6] = "magicrpg:hollow_armor"
+    FIXTURES[9, 66, -6] = "magicrpg:hollow_armor"
 
 
 def city():
@@ -294,15 +377,15 @@ def city():
     for x in (-7, 7):
         for z in (-24, -14):
             set_block(x, 81, z, LIGHT)
-    for x in (-15, -9, 9, 15):
-        for z in (-25, -10):
-            box(x, 82, z, x, 84, z, BRICK)
-            set_block(x, 85, z, LANTERN)
-    for x in (-13, 13):
-        box(x - 2, 81, -19, x + 2, 81, -12, BRICK)
-        stairs(x, -12, 81, 0, 1, 4, 3, 1)
-        box(x - 2, 85, -8, x + 2, 85, -6, DARK)
-        stairs(x, -6, 85, 0, 1, 4, 3, -1)
+    # Keep the dueling floor open. The surrounding colonnades frame the gate.
+    for x in (-16, 16):
+        for z in (-23, -15, -7):
+            box(x, 82, z, x, 94, z, PILLAR)
+            set_block(x, 93, z, LIGHT)
+        box(x, 95, -25, x, 95, -6, GOLD)
+    for x in range(-15, 16):
+        for z in range(-7, 0):
+            set_block(x, 81, z, PERCH if abs(x) in (5, 11) else DEEPSLATE if abs(x) < 5 else PAVING)
     # Tall gate with copper lintel, buttresses and an open postern up to the northern meadow.
     box(-19, 82, -29, 19, 96, -27, WHITE)
     box(-5, 82, -30, 5, 91, -26, AIR)
@@ -333,16 +416,39 @@ def city():
             y = min(109, SURFACE[x, z] - 2)
             box(x, 108, z, x, y, z, material("iron_chain[axis=y]"))
             set_block(x, 107, z, material("lantern[hanging=true]"))
-    box(12, 82, -24, 14, 82, -22, DEEPSLATE)
-    chest(13, 83, -23, "south", "meadow_gate")
+    box(16, 82, -26, 18, 82, -24, DEEPSLATE)
+    chest(17, 83, -24, "south", "meadow_gate")
     stairs(0, -28, 81, 0, -1, 23, 5, 1, True)
     for i in (4, 9, 14, 19):
         set_block(2, 82 + i, -28 - i, LANTERN)
-    FIXTURES[0, 82, -20] = "magicrpg:meadow_paladin"
+    FIXTURES[0, 82, -17] = "magicrpg:meadow_paladin"
+    wing(-1)
+    wing(1)
+    crypt()
+
+
+def spawners():
+    floor_spawners = [
+        (-20, 105, 22, "hollow_armor"),
+        (20, 105, 7, "hollow_armor"),
+        (-25, 82, 18, "city_stone_guard"),
+        (25, 82, 18, "city_stone_guard"),
+        (-44, 89, -2, "hollow_armor"),
+        (43, 89, -3, "city_stone_guard"),
+        (10, 66, 0, "hollow_armor"),
+    ]
+    for x, y, z, kind in floor_spawners:
+        if get_block(x, y, z) != AIR or get_block(x, y - 1, z) == AIR:
+            raise ValueError(f"Invalid spawner position at {(x, y, z)}")
+        set_block(x, y - 1, z, DEEPSLATE)
+        set_block(x, y, z, material("spawner"))
+        FIXTURES[x, y, z] = "magicrpg:" + kind
 
 
 def export():
     for pos, fixture in FIXTURES.items():
+        if get_block(*pos) == material("spawner"):
+            continue
         if fixture.startswith("magicrpg:chests/"):
             if get_block(pos[0], pos[1] + 1, pos[2]) != AIR:
                 raise ValueError(f"Blocked chest at {pos}")
@@ -356,4 +462,5 @@ if __name__ == "__main__":
     terrain()
     landmarks()
     city()
+    spawners()
     export()
