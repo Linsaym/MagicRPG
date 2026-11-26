@@ -2,6 +2,7 @@ package io.github.magicrpg;
 
 import io.github.magicrpg.compat.reforged.GoldenwoodMagic;
 import io.github.magicrpg.entity.AmberBolt;
+import io.github.magicrpg.entity.AmberArcher;
 import io.github.magicrpg.entity.HoneyMoth;
 import io.github.magicrpg.entity.WoodlandMonster;
 import io.github.magicrpg.world.AuthoredIsland;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.block.sounds.AmbientLeavesBlockSoundPlayer;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
@@ -90,6 +92,9 @@ public final class Goldenwood {
         .sized(0.53F, 0.33F).clientTrackingRange(8));
     public static final DeferredHolder<EntityType<?>, EntityType<AmberBolt>> BOLT = entity("amber_bolt", EntityType.Builder.<AmberBolt>of(AmberBolt::new, MobCategory.MISC)
         .sized(0.23F, 0.23F).clientTrackingRange(6).updateInterval(2));
+    public static final DeferredHolder<EntityType<?>, EntityType<AmberArcher>> ARCHER = entity("amber_archer",
+        EntityType.Builder.of(AmberArcher::new, MobCategory.MONSTER).sized(.88F, AmberArcher.HEIGHT)
+            .eyeHeight(AmberArcher.HEIGHT * .84F).clientTrackingRange(10));
 
     private Goldenwood() {}
 
@@ -120,6 +125,7 @@ public final class Goldenwood {
         bus.addListener(Goldenwood::spawnPlacements);
         NeoForge.EVENT_BUS.addListener(GoldenwoodMagic::boostMeleeDamage);
         NeoForge.EVENT_BUS.addListener(GoldenwoodMagic::recordMeleeHit);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, AmberArcher::damageShield);
     }
 
     private static void attributes(EntityAttributeCreationEvent event) {
@@ -128,6 +134,7 @@ public final class Goldenwood {
         event.put(BEETLE.get(), WoodlandMonster.attributes(WoodlandMonster.Kind.BEETLE).build());
         event.put(SPARK.get(), WoodlandMonster.attributes(WoodlandMonster.Kind.SPARK).build());
         event.put(MOTH.get(), HoneyMoth.attributes().build());
+        event.put(ARCHER.get(), AmberArcher.attributes().build());
     }
 
     private static void spawnPlacements(RegisterSpawnPlacementsEvent event) {

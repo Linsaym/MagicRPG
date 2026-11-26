@@ -3,6 +3,7 @@ package io.github.magicrpg.world;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.MapCodec;
 import io.github.magicrpg.MagicRpg;
+import io.github.magicrpg.entity.AmberArcher;
 import io.github.magicrpg.entity.CitySentry;
 import io.github.magicrpg.entity.MeadowPaladin;
 import java.io.DataInputStream;
@@ -144,8 +145,7 @@ public final class AuthoredIsland extends ChunkGenerator {
 
     @Override
     public void spawnOriginalMobs(WorldGenRegion region) {
-        if (map == MapData.GOLDENWOOD
-            || (map == MapData.IRON_WASTELANDS && region.getDifficulty() == Difficulty.PEACEFUL)) {
+        if (map == MapData.IRON_WASTELANDS && region.getDifficulty() == Difficulty.PEACEFUL) {
             return;
         }
         var tile = map.layout().tiles().get(region.getCenter().pack());
@@ -169,6 +169,8 @@ public final class AuthoredIsland extends ChunkGenerator {
             mob.setPersistenceRequired();
             if (mob instanceof MeadowPaladin paladin) {
                 paladin.guard(fixture.pos());
+            } else if (mob instanceof AmberArcher archer) {
+                archer.guard(fixture.pos());
             } else if (mob instanceof CitySentry sentry) {
                 sentry.station(fixture.pos());
             } else {

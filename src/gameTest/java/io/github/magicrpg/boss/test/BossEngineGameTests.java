@@ -30,6 +30,7 @@ import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
@@ -37,6 +38,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -64,7 +67,8 @@ public final class BossEngineGameTests {
         "phase_and_cleanup", BossEngineGameTests::phaseAndCleanup,
         "movement_and_wave", BossEngineGameTests::movementAndWave,
         "expiry_and_reset", BossEngineGameTests::expiryAndReset,
-        "player_targeting", BossEngineGameTests::playerTargeting
+        "player_targeting", BossEngineGameTests::playerTargeting,
+        "player_pin", BossEngineGameTests::playerPin
     );
 
     static {
@@ -284,6 +288,37 @@ public final class BossEngineGameTests {
         player.connection.markClientLoaded();
         test.getLevel().addNewPlayer(player);
         return player;
+    }
+
+    private static void playerPin(GameTestHelper test) {
+        var origin = test.absoluteVec(new Vec3(6.5, 1, 6.5));
+        var player = addPlayer(test, "pinned", origin, GameType.SURVIVAL);
+        var bind = BossAbility.<DummyBoss>builder(id("bind"), 8).cooldown(100)
+            .at(2, c -> {
+                player.setPos(origin.add(1, .4, 0));
+                player.setDeltaMovement(.1, .2, 0);
+                player.setYRot(63);
+                player.setXRot(-21);
+                player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.SHIELD));
+                player.startUsingItem(InteractionHand.OFF_HAND);
+            })
+            .during(0, 4, 1, BossActions.pinPlayer())
+            .at(2, c -> {
+                test.assertTrue(player.position().distanceToSqr(origin) < .001, "Restores the anchor");
+                test.assertValueEqual(player.getDeltaMovement(), Vec3.ZERO, "Clears the player's velocity");
+                test.assertValueEqual(player.getYRot(), 63F, "Keeps the player's yaw");
+                test.assertValueEqual(player.getXRot(), -21F, "Keeps the player's pitch");
+                test.assertTrue(player.isUsingItem() && player.getUseItem().is(Items.SHIELD), "Keeps the shield raised");
+            })
+            .at(5, c -> player.setPos(origin.add(1, 0, 0)))
+            .at(7, c -> {
+                test.assertTrue(player.position().distanceToSqr(origin) > .5, "Movement works during recovery");
+                test.getLevel().removePlayerImmediately(player, Entity.RemovalReason.DISCARDED);
+                test.succeed();
+            })
+            .build();
+        var boss = spawn(test, new BossEncounter<>(List.of(new BossEncounter.Phase<>(id("opening"), List.of(bind)))));
+        boss.setTarget(player);
     }
 
     @SafeVarargs

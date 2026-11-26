@@ -8,11 +8,14 @@ import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PositionMoveRotation;
+import net.minecraft.world.entity.Relative;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -163,6 +166,35 @@ public final class BossActions {
             boss.setDeltaMovement(motion);
             boss.syncVelocity = true;
         }
+    }
+
+    public static <B extends BossMob> BossAction<B> pinPlayer() {
+        var anchor = new BossContext.Key<>(Vec3.class);
+        return context -> {
+            if (!(context.target().orElse(null) instanceof ServerPlayer player)) {
+                context.interrupt();
+                return;
+            }
+            player.stopRiding();
+            Vec3 at = context.recall(anchor).orElseGet(() -> {
+                Vec3 start = player.position();
+                context.remember(anchor, start);
+                return start;
+            });
+            Vec3 offset = at.subtract(player.position());
+            if (!loadedAndInside(context.level(), at, context.boss().position())
+                || context.level().getBlockCollisions(player, player.getBoundingBox().move(offset)).iterator().hasNext()) {
+                context.interrupt();
+                return;
+            }
+            Vec3 motion = player.getDeltaMovement();
+            if (offset.lengthSqr() > 1.0E-6 || motion.horizontalDistanceSqr() > 1.0E-6 || motion.y > .001) {
+                player.connection.teleport(new PositionMoveRotation(at, Vec3.ZERO, 0, 0), Relative.ROTATION);
+            } else if (motion.y < 0) {
+                player.setDeltaMovement(Vec3.ZERO);
+            }
+            player.resetFallDistance();
+        };
     }
 
     public static <B extends BossMob> BossAction<B> teleport(Function<BossContext<B>, Vec3> destination) {

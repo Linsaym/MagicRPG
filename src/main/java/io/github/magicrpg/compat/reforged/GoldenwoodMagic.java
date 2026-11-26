@@ -50,7 +50,8 @@ public final class GoldenwoodMagic {
             Aspect.FIRE, Aspect.ORDER, page(ENTRY, 1), page(ENTRY, 2));
         diary(INHABITANTS, "magicrpg:golden_resin", ENTRY, 8, 0, Aspect.EARTH, Aspect.AIR, page(INHABITANTS, 1),
             page(INHABITANTS, 2), page(INHABITANTS, 3), illustration("honey_moth"));
-        diary(RUINS, "magicrpg:amber_heart", ENTRY, 8, 2, Aspect.ORDER, Aspect.ENTROPY, page(RUINS, 1), page(RUINS, 2));
+        diary(RUINS, "magicrpg:amber_heart", ENTRY, 8, 2, Aspect.ORDER, Aspect.ENTROPY,
+            page(RUINS, 1), page(RUINS, 2), page(RUINS, 3));
         for (var decoration : List.of("goldenwood_planks", "honeystone_bricks")) {
             var id = MagicRpg.id(decoration);
             TcRecipes.register(new CraftingRecipeRef(id.toString(), MATERIALS, id, TcStack.of(id.toString(), 4)));

@@ -54,6 +54,7 @@ public final class ClientRegistration {
         event.registerEntityRenderer(Goldenwood.MOTH.get(),
             context -> new WoodlandRenderer<>(context, WoodlandModel.Shape.MOTH, 0.13F));
         event.registerEntityRenderer(Goldenwood.BOLT.get(), context -> new ThrownItemRenderer<>(context, 0.65F, true));
+        event.registerEntityRenderer(Goldenwood.ARCHER.get(), AmberArcherRenderer::new);
         event.registerEntityRenderer(MagicRpg.ASH_HOUND.get(), AshHoundRenderer::new);
         event.registerEntityRenderer(MagicRpg.STAR_HARE.get(), StarHareRenderer::new);
         event.registerEntityRenderer(MagicRpg.MEADOW_PALADIN.get(), PaladinRenderer::new);

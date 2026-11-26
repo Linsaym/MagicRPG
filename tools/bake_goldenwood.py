@@ -668,6 +668,7 @@ def castles():
         lamp(xx, 107, zz, 0)
     fixture(-123, 133, -77, "chest[facing=east]", "chests/broken_spire")
     fixture(-120, 109, -76, "spawner", "ruin_spark")
+    FIXTURES[-107, 108, -69] = "magicrpg:amber_archer"
     landmark("broken_spire", -121, 108, -65)
     landmark("collapsed_watchpost", -92, 108, -56)
 
@@ -910,4 +911,4 @@ def author_island():
 
 if __name__ == "__main__":
     author_island()
-    export()
+    export(allow_inhabitants=True)
