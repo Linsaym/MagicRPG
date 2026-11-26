@@ -4,9 +4,16 @@ plugins {
 }
 
 group = 'io.github.magicrpg'
-version = '0.9.6'
+version = '0.9.9'
 base.archivesName = 'magicrpg'
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
 
 def profileMods = System.getenv('APPDATA') ? new File(System.getenv('APPDATA'), '.minecraft/mods') : file('libs')
 def dependencyJar = { String name ->
@@ -24,19 +31,28 @@ neoForge {
         version = neo_version
         disableRecompilation = true
     }
+    mods {
+        magicrpg { sourceSet sourceSets.main }
+        magicrpg_boss_tests { sourceSet sourceSets.gameTest }
+    }
     runs {
         client {
             client()
             gameDirectory = file('run/client')
+            loadedMods = [mods.magicrpg]
         }
         server {
             server()
             gameDirectory = file('run/server')
+            loadedMods = [mods.magicrpg]
             programArgument '--nogui'
         }
-    }
-    mods {
-        magicrpg { sourceSet sourceSets.main }
+        bossGameTest {
+            type = 'gameTestServer'
+            gameDirectory = file('run/boss-game-test')
+            loadedMods = [mods.magicrpg, mods.magicrpg_boss_tests]
+            programArguments.addAll('--tests', 'magicrpg_boss_tests:*', '--report', 'report.xml')
+        }
     }
 }
 

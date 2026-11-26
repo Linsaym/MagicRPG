@@ -1,7 +1,5 @@
 package io.github.magicrpg.client;
 
-import static io.github.magicrpg.client.PaladinModel.*;
-
 import io.github.magicrpg.MagicRpg;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -14,6 +12,14 @@ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.util.Mth;
 
 final class CitySentryModel extends EntityModel<CitySentryModel.State> {
+    private static final int LIGHT = 0, DARK = 1, CAPE = 2, SKIN = 3, SHADOW = 4, STEEL = 5, TRIM = 6, LINEN = 7;
+    private static final int RUNE = 8;
+
+    private static CubeListBuilder cube(CubeListBuilder cubes, int material, float x, float y, float z,
+                                       float width, float height, float depth) {
+        return cubes.texOffs(material * 128, 0).addBox(x, y, z, width, height, depth);
+    }
+
     enum Shape {
         STONE("city_stone_guard"), ARMOR("hollow_armor"), WORKER("buried_worker");
 

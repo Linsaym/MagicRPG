@@ -1,0 +1,14 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "magicrpg_boss_tests"
+version = "1"
+displayName = "MagicRPG Boss Engine GameTests"
+
+[[dependencies.magicrpg_boss_tests]]
+modId = "magicrpg"
+type = "required"
+ordering = "AFTER"
+side = "BOTH"
