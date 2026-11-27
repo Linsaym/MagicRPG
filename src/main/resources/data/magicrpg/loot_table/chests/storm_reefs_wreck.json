@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [{ "type": "minecraft:item", "name": "magicrpg:storm_bell" }]
+    },
+    {
+      "rolls": 1,
+      "entries": [{ "type": "minecraft:item", "name": "minecraft:nautilus_shell" }]
+    },
+    {
+      "rolls": 1,
+      "entries": [{ "type": "minecraft:item", "name": "minecraft:prismarine_crystals" }],
+      "functions": [{ "function": "minecraft:set_count", "count": 3 }]
+    }
+  ]
+}

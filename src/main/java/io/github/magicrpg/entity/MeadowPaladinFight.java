@@ -22,9 +22,9 @@ public final class MeadowPaladinFight {
     public static final int HEW = 2, HEW_CONTACT = 28, HEW_END = 55;
     public static final int RESONANCE = 3, RESONANCE_CONTACT = 33, RESONANCE_END = 67;
 
-    private static final double SWEEP_REACH = 4.15;
-    private static final double HEW_REACH = 3.65;
-    private static final double WAVE_REACH = 7;
+    private static final double SWEEP_START_RANGE = 4.15;
+    private static final double HEW_START_RANGE = 3.65;
+    private static final double WAVE_REACH = 7.75;
     private static final int WAVE_END = RESONANCE_CONTACT + 14;
     private static final Identifier OPENING = MagicRpg.id("paladin_opening");
     private static final Identifier CRACKED = MagicRpg.id("paladin_cracked");
@@ -51,7 +51,7 @@ public final class MeadowPaladinFight {
     private MeadowPaladinFight() {}
 
     private static BossAbility<MeadowPaladin> sweep() {
-        return attack("paladin_sweep", SWEEP, SWEEP_END, SWEEP_REACH, new BossZone.Cone(SWEEP_REACH, 96), 0)
+        return attack("paladin_sweep", SWEEP, SWEEP_END, SWEEP_START_RANGE, new BossZone.Cone(4.5, 96), 0)
             .cooldown(47).priority(10)
             .at(0, BossActions.sound(SoundEvents.IRON_GOLEM_STEP, 1.2F, .72F))
             .at(14, BossActions.sound(SoundEvents.IRON_GOLEM_REPAIR, .9F, .83F))
@@ -68,7 +68,8 @@ public final class MeadowPaladinFight {
 
     private static BossAbility<MeadowPaladin> hew() {
         // Start the strip inside the keeper's collision box so it covers point-blank targets.
-        return attack("paladin_hew", HEW, HEW_END, HEW_REACH, new BossZone.Line(HEW_REACH + .7, 1.10), -.7)
+        double backOffset = .7;
+        return attack("paladin_hew", HEW, HEW_END, HEW_START_RANGE, new BossZone.Line(4 + backOffset, 1.2), -backOffset)
             .cooldown(71).priority(20)
             .requires(cast -> cast.lastCompleted().filter(SWEEP_ATTACK.id()::equals).isPresent()
                 || cast.target().orElseThrow().distanceToSqr(cast.boss()) >= 2.6 * 2.6

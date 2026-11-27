@@ -1,7 +1,9 @@
 package io.github.magicrpg;
 
+import io.github.magicrpg.boss.GroundedEffect;
 import io.github.magicrpg.compat.reforged.ReforgedIntegration;
 import io.github.magicrpg.compat.reforged.ReforgedSpawnBalance;
+import io.github.magicrpg.compat.tinkerer.CursedSpiritBladeBlock;
 import io.github.magicrpg.entity.AncientMerchant;
 import io.github.magicrpg.entity.AshHound;
 import io.github.magicrpg.entity.ChalkGuardian;
@@ -14,6 +16,7 @@ import io.github.magicrpg.item.LilacArmor;
 import io.github.magicrpg.item.SummoningSeal;
 import io.github.magicrpg.item.TimeTurner;
 import io.github.magicrpg.menu.ArmorPouchMenu;
+import io.github.magicrpg.network.ArrowRainPayload;
 import io.github.magicrpg.network.ScanInventorySlotPayload;
 import io.github.magicrpg.world.IslandExport;
 import io.github.magicrpg.world.LinkedPortalBlock;
@@ -187,9 +190,12 @@ public final class MagicRpg {
     }
 
     public MagicRpg(IEventBus bus) {
+        GroundedEffect.register(bus);
         ReforgedSpawnBalance.register(bus);
+        CursedSpiritBladeBlock.register();
         Goldenwood.register(bus);
         IronWastelands.register(bus);
+        StormReefs.register(bus);
         WayfarerMirrors.register(bus, BLOCKS, ITEMS);
         ITEMS.register(bus);
         BLOCKS.register(bus);
@@ -200,6 +206,7 @@ public final class MagicRpg {
         bus.addListener(this::registerSpawnPlacements);
         bus.addListener(ReforgedIntegration::setup);
         bus.addListener(ScanInventorySlotPayload::register);
+        bus.addListener(ArrowRainPayload::register);
         NeoForge.EVENT_BUS.addListener(ReforgedIntegration::unlockFieldNotes);
         NeoForge.EVENT_BUS.addListener(ReforgedIntegration::showMatrixStability);
         NeoForge.EVENT_BUS.addListener(TimeTurner::onServerTick);

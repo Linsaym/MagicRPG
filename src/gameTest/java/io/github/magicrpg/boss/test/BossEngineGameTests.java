@@ -1,6 +1,7 @@
 package io.github.magicrpg.boss.test;
 
 import com.mojang.authlib.GameProfile;
+import io.github.magicrpg.StormReefs;
 import io.github.magicrpg.boss.BossAbility;
 import io.github.magicrpg.boss.BossAction;
 import io.github.magicrpg.boss.BossActions;
@@ -8,13 +9,16 @@ import io.github.magicrpg.boss.BossContext.Scope;
 import io.github.magicrpg.boss.BossEncounter;
 import io.github.magicrpg.boss.BossFight;
 import io.github.magicrpg.boss.BossMob;
+import io.github.magicrpg.boss.BossRespawns;
 import io.github.magicrpg.boss.BossZone;
+import io.github.magicrpg.boss.GroundedEffect;
 import io.github.magicrpg.boss.animation.AnimationClip;
 import io.github.magicrpg.boss.animation.AnimationCue;
 import io.github.magicrpg.boss.animation.AnimationPlayer;
 import io.github.magicrpg.boss.animation.BoneTransform;
 import io.github.magicrpg.boss.animation.Curve;
 import io.github.magicrpg.boss.animation.KeyframeTrack;
+import io.github.magicrpg.entity.StormPilotFight;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,9 +47,11 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForgeMod;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -68,7 +74,10 @@ public final class BossEngineGameTests {
         "movement_and_wave", BossEngineGameTests::movementAndWave,
         "expiry_and_reset", BossEngineGameTests::expiryAndReset,
         "player_targeting", BossEngineGameTests::playerTargeting,
-        "player_pin", BossEngineGameTests::playerPin
+        "player_pin", BossEngineGameTests::playerPin,
+        "storm_pilot_eye", BossEngineGameTests::stormPilotEye,
+        "boss_respawn", BossEngineGameTests::bossRespawn,
+        "boss_grounding", BossEngineGameTests::bossGrounding
     );
 
     static {
@@ -280,6 +289,31 @@ public final class BossEngineGameTests {
         });
     }
 
+    private static void stormPilotEye(GameTestHelper test) {
+        var local = new Vec3(5.5, 1, 6.5);
+        var origin = test.absoluteVec(local);
+        var pilot = test.spawn(StormReefs.STORM_PILOT.get(), local);
+        pilot.anchorAt(BlockPos.containing(origin));
+        var sheltered = addPlayer(test, "sheltered", test.absoluteVec(local.add(2, 0, 0)), GameType.SURVIVAL);
+        var exposed = addPlayer(test, "exposed", test.absoluteVec(local.add(5.25, 0, 0)), GameType.SURVIVAL);
+        pilot.setTarget(sheltered);
+        pilot.setHealth(pilot.getMaxHealth() / 2);
+
+        test.runAfterDelay(StormPilotFight.EYE_CONTACT + 6, () -> {
+            try {
+                test.assertValueEqual(pilot.animationCue().clip(), StormPilotFight.EYE_CLIP,
+                    "The Storm Pilot starts the ring attack at half health");
+                test.assertValueEqual(sheltered.getHealth(), 20F, "The eye of the storm shelters the player");
+                test.assertTrue(exposed.getHealth() < 20F, "The same cast strikes another player in the outer ring");
+            } finally {
+                for (var player : List.of(sheltered, exposed)) {
+                    test.getLevel().removePlayerImmediately(player, Entity.RemovalReason.DISCARDED);
+                }
+            }
+            test.succeed();
+        });
+    }
+
     private static FakePlayer addPlayer(GameTestHelper test, String name, Vec3 at, GameType mode) {
         var player = new FakePlayer(test.getLevel(), new GameProfile(UUID.randomUUID(), name));
         player.setPos(at);
@@ -288,6 +322,83 @@ public final class BossEngineGameTests {
         player.connection.markClientLoaded();
         test.getLevel().addNewPlayer(player);
         return player;
+    }
+
+    private static void bossRespawn(GameTestHelper test) {
+        var level = test.getLevel();
+        var local = new BlockPos(3, 1, 3);
+        var origin = Vec3.atBottomCenterOf(local);
+        var boss = test.spawn(DUMMY.get(), origin);
+        int delay = 40;
+        boss.respawnDelay = delay;
+        boss.setPos(test.absoluteVec(origin.add(4, 0, 4)));
+        boss.kill(level);
+
+        var feet = test.absolutePos(local);
+        test.assertTrue(BossRespawns.isPending(level, DUMMY.get(), feet), "Death schedules the original spawn point");
+        test.setBlock(local.below(), Blocks.AIR);
+        test.setBlock(local.below().east(), Blocks.COBBLESTONE);
+        test.setBlock(local, Blocks.OBSIDIAN);
+        test.setBlock(local.above(), Blocks.OBSIDIAN);
+        test.setBlock(local.east(), Blocks.OBSIDIAN);
+
+        test.runAfterDelay(delay - 1, () -> {
+            test.assertTrue(BossRespawns.isPending(level, DUMMY.get(), feet), "The boss waits for the full delay");
+            test.assertBlockPresent(Blocks.OBSIDIAN, local);
+        });
+        test.runAfterDelay(delay + 2, () -> {
+            var living = level.getEntitiesOfClass(DummyBoss.class, new AABB(feet).inflate(1), DummyBoss::isAlive);
+            test.assertValueEqual(living.size(), 1, "Exactly one boss returns");
+            var replacement = living.getFirst();
+            test.assertTrue(replacement.distanceToSqr(test.absoluteVec(origin)) < .01, "Respawns at its starting position");
+            test.assertValueEqual(replacement.getHealth(), replacement.getMaxHealth(), "Respawns at full health");
+            test.assertTrue(!BossRespawns.isPending(level, DUMMY.get(), feet), "The completed respawn leaves the queue");
+            test.assertBlockPresent(Blocks.STONE, local.below());
+            test.assertBlockPresent(Blocks.COBBLESTONE, local.below().east());
+            test.assertBlockPresent(Blocks.AIR, local);
+            test.assertBlockPresent(Blocks.AIR, local.above());
+            test.assertBlockPresent(Blocks.OBSIDIAN, local.east());
+            replacement.discard();
+            test.succeed();
+        });
+    }
+
+    private static void bossGrounding(GameTestHelper test) {
+        var level = test.getLevel();
+        var origin = test.absoluteVec(new Vec3(5.5, 1, 4.5));
+        var player = addPlayer(test, "grounded", origin, GameType.SURVIVAL);
+        var creative = addPlayer(test, "creative_flyer", origin.add(1, 0, 0), GameType.CREATIVE);
+        player.getAttribute(NeoForgeMod.CREATIVE_FLIGHT).setBaseValue(1);
+        player.getAttribute(NeoForgeMod.GLIDING_FLIGHT).setBaseValue(1);
+        player.getAbilities().flying = true;
+        player.startFallFlying();
+        var boss = spawn(test, new BossEncounter<>(List.of(new BossEncounter.Phase<>(id("opening"), List.of()))));
+        boss.setTarget(player);
+
+        test.runAfterDelay(5, () -> {
+            boolean grounded = GroundedEffect.blocksFlight(player);
+            boolean flightStopped = !player.getAbilities().flying && !player.isFallFlying() && !player.mayFly()
+                && player.getAttributeValue(NeoForgeMod.GLIDING_FLIGHT) == 0;
+            boolean creativeUnaffected = !creative.hasEffect(GroundedEffect.GROUNDED);
+            player.setDeltaMovement(Vec3.ZERO);
+            player.jumpFromGround();
+            boolean canJump = player.getDeltaMovement().y > 0;
+            boss.discard();
+
+            test.runAfterDelay(32, () -> {
+                try {
+                    test.assertTrue(grounded && flightStopped, "The debuff stops and prevents flight");
+                    test.assertTrue(creativeUnaffected, "Creative players are excluded from the effect");
+                    test.assertTrue(canJump, "Grounded players can jump normally");
+                    test.assertTrue(!player.hasEffect(GroundedEffect.GROUNDED) && player.mayFly()
+                        && player.getAttributeValue(NeoForgeMod.GLIDING_FLIGHT) == 1, "Flight is restored after the fight");
+                } finally {
+                    level.removePlayerImmediately(player, Entity.RemovalReason.DISCARDED);
+                    level.removePlayerImmediately(creative, Entity.RemovalReason.DISCARDED);
+                }
+                test.succeed();
+            });
+        });
     }
 
     private static void playerPin(GameTestHelper test) {
@@ -343,10 +454,14 @@ public final class BossEngineGameTests {
     private static final class DummyBoss extends BossMob {
         private BossFight<DummyBoss> fight = new BossFight<>(this,
             new BossEncounter<>(List.of(new BossEncounter.Phase<>(id("idle"), List.of()))));
+        private int respawnDelay;
 
         private DummyBoss(EntityType<? extends BossMob> type, Level level) { super(type, level); }
 
         @Override
         protected BossFight<DummyBoss> bossFight() { return fight; }
+
+        @Override
+        protected int respawnDelayTicks() { return respawnDelay; }
     }
 }

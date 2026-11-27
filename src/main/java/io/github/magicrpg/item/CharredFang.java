@@ -26,11 +26,19 @@ public final class CharredFang extends Item {
         }
         if (level instanceof ServerLevel server && context.getPlayer() instanceof ServerPlayer player) {
             var activation = route.portal().activate(server, clicked, player);
-            if (activation != Activation.OPENED) {
-                var message = activation == Activation.LANDING_FULL
-                    ? route.landingFullMessage() : route.invalidFrameMessage();
+            var message = switch (activation) {
+                case OPENED -> null;
+                case INVALID_FRAME -> route.invalidFrameMessage();
+                case LANDING_FULL -> route.landingFullMessage();
+                case ALREADY_OPEN -> getDescriptionId() + ".already_open";
+                case OPENING_BLOCKED -> getDescriptionId() + ".opening_blocked";
+                case PROTECTED -> getDescriptionId() + ".protected";
+                case WRONG_RETURN_ARCH -> getDescriptionId() + ".wrong_return_arch";
+                case DESTINATION_UNAVAILABLE -> getDescriptionId() + ".destination_unavailable";
+            };
+            if (message != null) {
                 player.sendOverlayMessage(Component.translatable(message));
-                return InteractionResult.FAIL;
+                return activation == Activation.ALREADY_OPEN ? InteractionResult.SUCCESS_SERVER : InteractionResult.FAIL;
             }
             context.getItemInHand().consume(1, player);
             level.playSound(null, clicked, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 1, 0.75F);

@@ -1,0 +1,19 @@
+{
+  "render_type": "minecraft:translucent",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "magicrpg:block/storm_reefs_portal",
+    "veil": "magicrpg:block/storm_reefs_portal"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 7.8],
+      "to": [16, 16, 8.2],
+      "shade": false,
+      "faces": {
+        "north": { "texture": "#veil" },
+        "south": { "texture": "#veil" }
+      }
+    }
+  ]
+}

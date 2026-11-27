@@ -30,6 +30,7 @@ final class PortalLinks extends SavedData {
     private static final SavedDataType<PortalLinks> MEADOW_LINKS = type("meadow_portals");
     private static final SavedDataType<PortalLinks> GOLDENWOOD_LINKS = type("goldenwood_portals");
     private static final SavedDataType<PortalLinks> WASTELANDS_LINKS = type("iron_wastelands_portals");
+    private static final SavedDataType<PortalLinks> REEF_LINKS = type("storm_reefs_portals");
 
     private static SavedDataType<PortalLinks> type(String id) {
         return new SavedDataType<>(MagicRpg.id(id), () -> new PortalLinks(List.of()),
@@ -110,6 +111,7 @@ final class PortalLinks extends SavedData {
             case GOLDENWOOD -> GOLDENWOOD_LINKS;
             case MEADOWS -> MEADOW_LINKS;
             case IRON_WASTELANDS -> WASTELANDS_LINKS;
+            case STORM_REEFS -> REEF_LINKS;
         };
     }
 
@@ -135,11 +137,8 @@ final class PortalLinks extends SavedData {
         return blocks;
     }
 
-    static boolean prepareIslandArch(ServerLevel source, PortalFrame frame, ServerPlayer player, PortalRoute route) {
-        var target = source.getServer().getLevel(route.dimension());
-        if (target == null) {
-            return false;
-        }
+    static boolean prepareIslandArch(ServerLevel source, ServerLevel target, PortalFrame frame, ServerPlayer player,
+                                   PortalRoute route) {
         var sharedArch = route.sharedArch();
         if (sharedArch != null) {
             return prepareSharedArch(target, player, route, sharedArch) != null;
@@ -345,6 +344,7 @@ final class PortalLinks extends SavedData {
     private static final class SharedReturns extends SavedData {
         private static final SavedDataType<SharedReturns> MEADOWS = type("meadow_returns");
         private static final SavedDataType<SharedReturns> WASTELANDS = type("iron_wastelands_returns");
+        private static final SavedDataType<SharedReturns> REEFS = type("storm_reefs_returns");
 
         private static SavedDataType<SharedReturns> type(String id) {
             return new SavedDataType<>(MagicRpg.id(id), () -> new SharedReturns(Map.of()),
@@ -359,7 +359,12 @@ final class PortalLinks extends SavedData {
         }
 
         private static SharedReturns get(ServerLevel level, PortalRoute route) {
-            var type = route == PortalRoute.MEADOWS ? MEADOWS : WASTELANDS;
+            var type = switch (route) {
+                case MEADOWS -> MEADOWS;
+                case IRON_WASTELANDS -> WASTELANDS;
+                case STORM_REEFS -> REEFS;
+                case GOLDENWOOD -> throw new IllegalArgumentException("Goldenwood links individual arches");
+            };
             return level.getServer().overworld().getDataStorage().computeIfAbsent(type);
         }
 

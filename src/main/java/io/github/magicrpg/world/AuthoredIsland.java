@@ -76,7 +76,8 @@ public final class AuthoredIsland extends ChunkGenerator {
     private enum MapData {
         GOLDENWOOD("goldenwood", 83),
         MEADOWS("lilac_meadows", 112),
-        IRON_WASTELANDS("iron_wastelands", 104);
+        IRON_WASTELANDS("iron_wastelands", 104),
+        STORM_REEFS("storm_reefs", 100);
 
         private final String name;
         private final int seaLevel;
@@ -107,6 +108,7 @@ public final class AuthoredIsland extends ChunkGenerator {
         GENERATORS.register("goldenwood_island", () -> MapData.GOLDENWOOD.codec);
         GENERATORS.register("lilac_meadows_island", () -> MapData.MEADOWS.codec);
         GENERATORS.register("iron_wastelands_island", () -> MapData.IRON_WASTELANDS.codec);
+        GENERATORS.register("storm_reefs_island", () -> MapData.STORM_REEFS.codec);
         GENERATORS.register(bus);
     }
 

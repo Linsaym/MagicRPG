@@ -9,6 +9,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -82,6 +83,12 @@ public final class BossFight<B extends BossMob> {
         }
         if (phase == null) {
             return;
+        }
+        if (phaseStarted == now || now % GroundedEffect.REFRESH_TICKS == 0) {
+            var range = boss.getBoundingBox().inflate(BossZone.MAX_REACH);
+            for (var player : level.getEntitiesOfClass(ServerPlayer.class, range, this::isHostile)) {
+                GroundedEffect.apply(player, boss);
+            }
         }
         if (cast != null) {
             var current = cast;

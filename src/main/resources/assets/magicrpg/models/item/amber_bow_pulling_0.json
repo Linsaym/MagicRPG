@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/bow",
+  "textures": {
+    "layer0": "magicrpg:item/amber_bow_pulling_0"
+  }
+}

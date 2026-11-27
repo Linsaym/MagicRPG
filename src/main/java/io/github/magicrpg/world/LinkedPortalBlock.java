@@ -38,29 +38,68 @@ public final class LinkedPortalBlock extends Block implements Portal {
     }
 
     public enum Activation {
-        OPENED, INVALID_FRAME, LANDING_FULL
+        OPENED, ALREADY_OPEN, INVALID_FRAME, OPENING_BLOCKED, PROTECTED, WRONG_RETURN_ARCH,
+        DESTINATION_UNAVAILABLE, LANDING_FULL
     }
 
     public Activation activate(ServerLevel level, BlockPos clicked, ServerPlayer player) {
-        if (level.dimension().equals(route.dimension()) || level.getServer().getLevel(route.dimension()) == null
-            || !level.mayInteract(player, clicked)) {
-            return Activation.INVALID_FRAME;
+        if (!level.mayInteract(player, clicked)) {
+            return Activation.PROTECTED;
         }
+        if (level.dimension().equals(route.dimension())) {
+            var returnArch = route.sharedArch();
+            if (returnArch == null || !returnArch.border().contains(clicked)) {
+                return Activation.WRONG_RETURN_ARCH;
+            }
+            return activateFrame(level, returnArch, player, true);
+        }
+
+        var failure = Activation.INVALID_FRAME;
         for (var axis : PortalFrame.AXES) {
             for (var offset : PortalFrame.BORDER) {
                 var frame = new PortalFrame(clicked.relative(PortalFrame.along(axis), -offset.getX())
                     .below(offset.getY()), axis);
-                if (frame.hasBricks(level, route) && frame.interior().stream()
-                    .allMatch(pos -> level.isEmptyBlock(pos) && level.mayInteract(player, pos))) {
-                    if (!PortalLinks.prepareIslandArch(level, frame, player, route)) {
-                        return Activation.LANDING_FULL;
+                var result = activateFrame(level, frame, player, false);
+                switch (result) {
+                    case INVALID_FRAME -> { }
+                    case OPENING_BLOCKED -> {
+                        if (failure == Activation.INVALID_FRAME) {
+                            failure = Activation.OPENING_BLOCKED;
+                        }
                     }
-                    frame.open(level, route);
-                    return Activation.OPENED;
+                    case PROTECTED -> failure = Activation.PROTECTED;
+                    default -> { return result; }
                 }
             }
         }
-        return Activation.INVALID_FRAME;
+        return failure;
+    }
+
+    private Activation activateFrame(ServerLevel level, PortalFrame frame, ServerPlayer player, boolean returning) {
+        if (!frame.hasBricks(level, route)) {
+            return Activation.INVALID_FRAME;
+        }
+        if (frame.hasPortalBlocks(level, route)) {
+            return Activation.ALREADY_OPEN;
+        }
+        var opening = frame.interior();
+        if (opening.stream().anyMatch(pos -> !level.mayInteract(player, pos))) {
+            return Activation.PROTECTED;
+        }
+        if (opening.stream().anyMatch(pos -> !level.isEmptyBlock(pos))) {
+            return Activation.OPENING_BLOCKED;
+        }
+        if (!returning) {
+            var target = level.getServer().getLevel(route.dimension());
+            if (target == null) {
+                return Activation.DESTINATION_UNAVAILABLE;
+            }
+            if (!PortalLinks.prepareIslandArch(level, target, frame, player, route)) {
+                return Activation.LANDING_FULL;
+            }
+        }
+        frame.open(level, route);
+        return frame.hasPortalBlocks(level, route) ? Activation.OPENED : Activation.OPENING_BLOCKED;
     }
 
     @Override
@@ -116,6 +155,7 @@ public final class LinkedPortalBlock extends Block implements Portal {
                 case GOLDENWOOD -> ParticleTypes.WAX_ON;
                 case MEADOWS -> ParticleTypes.END_ROD;
                 case IRON_WASTELANDS -> ParticleTypes.ASH;
+                case STORM_REEFS -> ParticleTypes.ELECTRIC_SPARK;
             };
             level.addParticle(particle, pos.getX() + random.nextDouble(), pos.getY() + random.nextDouble(),
                 pos.getZ() + random.nextDouble(), 0, 0.025, 0);

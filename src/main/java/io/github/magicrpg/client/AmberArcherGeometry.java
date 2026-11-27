@@ -1,5 +1,7 @@
 package io.github.magicrpg.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.magicrpg.entity.AmberArcher;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -513,8 +515,7 @@ final class AmberArcherGeometry {
             var f = new Point(x1, y0, z1);
             var g = new Point(x1, y1, z1);
             var h = new Point(x0, y1, z1);
-            var cube = new Cube(0, 0, x0, y0, z0, x1 - x0, y1 - y0, z1 - z0, 0, 0, 0, false,
-                ATLAS_SIZE, ATLAS_SIZE, EnumSet.allOf(Direction.class));
+            var cube = new MeshCube(x0, y0, z0, x1 - x0, y1 - y0, z1 - z0, EnumSet.allOf(Direction.class));
             cube.polygons[0] = facePolygon(Direction.NORTH, tiles.front, a, b, c, d);
             cube.polygons[1] = facePolygon(Direction.SOUTH, tiles.back, f, e, h, g);
             cube.polygons[2] = facePolygon(Direction.WEST, tiles.west, e, a, d, h);
@@ -544,8 +545,8 @@ final class AmberArcherGeometry {
                 maxY = Math.max(maxY, vertex.y());
                 maxZ = Math.max(maxZ, vertex.z());
             }
-            var cube = new Cube(0, 0, minX, minY, minZ, maxX - minX, maxY - minY, maxZ - minZ, 0, 0, 0,
-                false, ATLAS_SIZE, ATLAS_SIZE, EnumSet.of(direction));
+            var cube = new MeshCube(minX, minY, minZ, maxX - minX, maxY - minY, maxZ - minZ,
+                EnumSet.of(direction));
             cube.polygons[0] = polygon;
             cubes.add(cube);
         }
@@ -564,6 +565,27 @@ final class AmberArcherGeometry {
                 return new Polygon(new Vertex[]{a, d, c, b}, normal.negate());
             }
             return new Polygon(new Vertex[]{a, b, c, d}, normal);
+        }
+    }
+
+    private static final class MeshCube extends Cube {
+        MeshCube(float x, float y, float z, float width, float height, float depth, EnumSet<Direction> faces) {
+            super(0, 0, x, y, z, width, height, depth, 0, 0, 0, false, ATLAS_SIZE, ATLAS_SIZE, faces);
+        }
+
+        @Override
+        public void compile(PoseStack.Pose pose, VertexConsumer consumer, int light, int overlay, int color) {
+            // Sodium caches the constructor's cuboid. This mesh replaces those faces with authored polygons.
+            var position = new Vector3f();
+            var normal = new Vector3f();
+            for (var polygon : polygons) {
+                pose.transformNormal(polygon.normal(), normal);
+                for (var vertex : polygon.vertices()) {
+                    pose.pose().transformPosition(vertex.worldX(), vertex.worldY(), vertex.worldZ(), position);
+                    consumer.addVertex(position.x(), position.y(), position.z(), color, vertex.u(), vertex.v(),
+                        overlay, light, normal.x(), normal.y(), normal.z());
+                }
+            }
         }
     }
 }

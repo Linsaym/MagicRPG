@@ -38,6 +38,8 @@ public final class GoldenwoodMagic {
     private static final String MATERIALS = "MAGICRPG_GOLDENWOOD_MATERIALS";
     private static final String RING = "MAGICRPG_PREDATORY_SUN";
     private static final String RECIPE = "magicrpg:predatory_sun_ring";
+    private static final String BOW = "MAGICRPG_AMBER_BOW";
+    private static final String BOW_RECIPE = "magicrpg:amber_bow";
     private static final int STREAK_TICKS = 80;
     private static final int MAX_BONUS_HITS = 5;
     private static final float BONUS_PER_HIT = 0.12F;
@@ -74,6 +76,23 @@ public final class GoldenwoodMagic {
             .setSecondary()
             .setPages(page(RING, 1), page(RING, 2), ResearchPage.infusion(RECIPE), page(RING, 3))
             .registerResearchItem();
+
+        var bow = TcStack.of(BOW_RECIPE);
+        var planks = ingredient("goldenwood_planks");
+        var resin = ingredient("golden_resin");
+        var string = TcIngredient.item("minecraft:string");
+        TcRecipes.register(new InfusionRecipe(BOW_RECIPE, BOW, bow, 4,
+            new AspectList().add(Aspect.WEAPON, 24).add(Aspect.TRAP, 20)
+                .add(Aspect.ORDER, 16).add(Aspect.MAGIC, 12),
+            ingredient("bow_fragment"), List.of(planks, planks, string, string, resin, resin)));
+
+        new ResearchItem(BOW, ReforgedIntegration.BEASTS_CATEGORY,
+            new AspectList().add(Aspect.WEAPON, 4).add(Aspect.TRAP, 4), 10, 3, 2, bow)
+            .setParents(RUINS)
+            .setParentsHidden("INFUSION")
+            .setSecondary()
+            .setPages(page(BOW, 1), page(BOW, 2), ResearchPage.infusion(BOW_RECIPE))
+            .registerResearchItem();
     }
 
     static void registerAspects() {
@@ -89,6 +108,10 @@ public final class GoldenwoodMagic {
             registry.register(Goldenwood.HONEYBELL_ITEM.get(), aspects(Aspect.PLANT, 2, Aspect.LIGHT, 3));
             registry.register(Goldenwood.RESIN.get(), aspects(Aspect.TREE, 3, Aspect.ENERGY, 2));
             registry.register(Goldenwood.HEART.get(), aspects(Aspect.LIFE, 4, Aspect.ENERGY, 4).add(Aspect.MAGIC, 3));
+            registry.register(Goldenwood.BOW_FRAGMENT.get(), aspects(Aspect.TREE, 3, Aspect.WEAPON, 3)
+                .add(Aspect.TRAP, 2));
+            registry.register(Goldenwood.AMBER_BOW.get(), aspects(Aspect.WEAPON, 8, Aspect.TRAP, 6)
+                .add(Aspect.ORDER, 4).add(Aspect.MAGIC, 4));
             registry.register(Goldenwood.CARAPACE.get(), aspects(Aspect.ARMOR, 3, Aspect.BEAST, 2));
             registry.register(Goldenwood.SPARK_SHARD.get(), aspects(Aspect.FIRE, 3, Aspect.MAGIC, 3));
             registry.register(Goldenwood.POLLEN.get(), aspects(Aspect.LIGHT, 3, Aspect.PLANT, 2));

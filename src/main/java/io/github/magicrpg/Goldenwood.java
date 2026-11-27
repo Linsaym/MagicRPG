@@ -5,6 +5,8 @@ import io.github.magicrpg.entity.AmberBolt;
 import io.github.magicrpg.entity.AmberArcher;
 import io.github.magicrpg.entity.HoneyMoth;
 import io.github.magicrpg.entity.WoodlandMonster;
+import io.github.magicrpg.item.AmberBinding;
+import io.github.magicrpg.item.AmberBow;
 import io.github.magicrpg.world.AuthoredIsland;
 import io.github.magicrpg.world.HoneybellBlock;
 import io.github.magicrpg.world.LinkedPortalBlock;
@@ -77,6 +79,9 @@ public final class Goldenwood {
     public static final DeferredItem<BlockItem> HONEYBELL_ITEM = ITEMS.registerSimpleBlockItem(HONEYBELL);
     public static final DeferredItem<Item> RESIN = ITEMS.registerSimpleItem("golden_resin");
     public static final DeferredItem<Item> HEART = ITEMS.registerSimpleItem("amber_heart");
+    public static final DeferredItem<Item> BOW_FRAGMENT = ITEMS.registerSimpleItem("bow_fragment");
+    public static final DeferredItem<AmberBow> AMBER_BOW = ITEMS.registerItem("amber_bow", AmberBow::new,
+        properties -> properties.stacksTo(1));
     public static final DeferredItem<Item> CARAPACE = ITEMS.registerSimpleItem("amber_carapace");
     public static final DeferredItem<Item> SPARK_SHARD = ITEMS.registerSimpleItem("spark_shard");
     public static final DeferredItem<Item> POLLEN = ITEMS.registerSimpleItem("glowing_pollen");
@@ -121,6 +126,7 @@ public final class Goldenwood {
         BLOCKS.register(bus);
         ITEMS.register(bus);
         ENTITIES.register(bus);
+        AmberBinding.register(bus);
         bus.addListener(Goldenwood::attributes);
         bus.addListener(Goldenwood::spawnPlacements);
         NeoForge.EVENT_BUS.addListener(GoldenwoodMagic::boostMeleeDamage);

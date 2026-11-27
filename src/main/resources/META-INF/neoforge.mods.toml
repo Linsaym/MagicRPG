@@ -11,6 +11,15 @@ description = "Monstrous creatures and summoning rites for Thaumcraft 4: Reforge
 [[mixins]]
 config = "magicrpg.mixins.json"
 
+[[mixins]]
+config = "magicrpg.reforged.mixins.json"
+
+[[mixins]]
+config = "magicrpg.tinkerer.mixins.json"
+
+[[mixins]]
+config = "magicrpg.amber_binding.mixins.json"
+
 [[dependencies.magicrpg]]
 modId = "minecraft"
 type = "required"

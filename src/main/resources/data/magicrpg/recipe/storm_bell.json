@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:copper_ingot",
+    "minecraft:copper_ingot",
+    "minecraft:amethyst_shard",
+    "minecraft:prismarine_crystals"
+  ],
+  "result": {
+    "id": "magicrpg:storm_bell"
+  }
+}

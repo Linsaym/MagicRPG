@@ -1,10 +1,14 @@
 package io.github.magicrpg.client;
 
 import static io.github.magicrpg.boss.animation.Curve.*;
+import static io.github.magicrpg.client.PaladinGeometry.*;
 import static io.github.magicrpg.client.PaladinModel.Bone.*;
+import static io.github.magicrpg.client.PaladinModel.WALK_BLADE_ROLL;
+import static io.github.magicrpg.client.PaladinModel.WALK_BLADE_SHIFT;
 import static io.github.magicrpg.entity.MeadowPaladinFight.*;
 
 import io.github.magicrpg.boss.animation.AnimationClip;
+import io.github.magicrpg.boss.animation.AnimationCue;
 import io.github.magicrpg.boss.animation.BoneTransform;
 import io.github.magicrpg.boss.animation.Curve;
 import io.github.magicrpg.boss.animation.KeyframeTrack;
@@ -14,10 +18,25 @@ import java.util.List;
 import java.util.Map;
 
 final class PaladinAnimations {
+    static final AnimationCue PLANTED_SWORD = new AnimationCue(4, 0);
     static final Map<Integer, AnimationClip<Bone>> CLIPS = Map.of(
-        SWEEP, sweep(), HEW, hew(), RESONANCE, resonance());
+        SWEEP, sweep(), HEW, hew(), RESONANCE, resonance(), PLANTED_SWORD.clip(), guardStance());
 
     private PaladinAnimations() {}
+
+    private static AnimationClip<Bone> guardStance() {
+        float hipRise = 1.5F;
+        float tipBelowSoles = 1;
+        float gripHeight = SOLES_Y + tipBelowSoles - SWORD_POINT_Y - (HIPS_Y - hipRise + CHEST_Y);
+        return new AnimationClip<>(1, Map.of(
+            HIPS, held(frame(0, LINEAR, 0, -hipRise, 0, 0, 0, 0)),
+            BLADE, held(frame(0, LINEAR, -WALK_BLADE_SHIFT, gripHeight - GRIP_Y, -4.5F,
+                -GRIP_PITCH, .055F, -WALK_BLADE_ROLL)),
+            HELM, held(frame(0, LINEAR, 0, 0, 0, .10F, 0, 0)),
+            CORE, held(core(0, .88F)),
+            LEFT_BOOT, held(frame(0, LINEAR, 0, 0, -BOOT_STAGGER, 0, 0, 0)),
+            RIGHT_BOOT, held(frame(0, LINEAR, 0, 0, BOOT_STAGGER, 0, 0, 0))));
+    }
 
     private static AnimationClip<Bone> sweep() {
         return new AnimationClip<>(SWEEP_END, Map.of(
@@ -36,7 +55,7 @@ final class PaladinAnimations {
             BLADE, track(SWEEP_END,
                 frame(15, SMOOTHSTEP, -4, 4, 3, .70F, .68F, .15F),
                 frame(18, EASE_OUT, -4, 4, 3, .69F, .85F, .14F),
-                frame(SWEEP_CONTACT, EASE_IN, 0, 6, 4, .70F, 0, 0),
+                frame(SWEEP_CONTACT, EASE_IN, 0, 6, -3, .70F, 0, 0),
                 frame(26, EASE_OUT, 4, 8, 3, .98F, -.65F, -.07F),
                 frame(33, SMOOTHSTEP, 4, 8, 2, 1.00F, -.55F, -.07F)),
             HELM, track(SWEEP_END,
@@ -77,10 +96,10 @@ final class PaladinAnimations {
             BLADE, track(HEW_END,
                 frame(17, SMOOTHSTEP, 1.5F, -23, 4, -1.61F, 0, -.19F),
                 frame(23, EASE_OUT, 1.2F, -23, 2, -1.51F, 0, -.11F),
-                frame(HEW_CONTACT, EASE_IN, .8F, 0, 2, 1.26F, 0, 0),
+                frame(HEW_CONTACT, EASE_IN, .8F, 3.65F, -3.96F, 1.26F, 0, 0),
                 // The grip drops with the shoulders while the point stays against the floor.
-                frame(34, EASE_OUT, .8F, -2.5F, 3.9F, 1.19F, 0, .01F),
-                frame(45, SMOOTHSTEP, .8F, -1.2F, 3.2F, 1.22F, 0, .02F),
+                frame(34, EASE_OUT, .77F, .74F, -2.31F, 1.19F, 0, .01F),
+                frame(45, SMOOTHSTEP, .73F, 2.22F, -2.91F, 1.22F, 0, .02F),
                 frame(49, EASE_IN, .5F, -6, 4, .92F, 0, -.14F)),
             HELM, track(HEW_END,
                 frame(19, SMOOTHSTEP, 0, 0, 0, .16F, -.08F, -.08F),
@@ -121,9 +140,9 @@ final class PaladinAnimations {
                 frame(9, SMOOTHSTEP, 2, -14, -1, .85F, -.20F, -.72F),
                 frame(18, SMOOTHSTEP, 0, -19, 0, 2.17F, 0, -.07F),
                 frame(28, SMOOTHSTEP, 0, -25, 0, 2.39F, 0, 0),
-                frame(RESONANCE_CONTACT, EASE_IN, 0, -11, 0, 2.12F, 0, 0),
-                frame(38, EASE_OUT, 0, -14.5F, -.3F, 2.01F, 0, 0),
-                frame(54, SMOOTHSTEP, -.45F, -14.6F, -.4F, 2.0F, 0, -.025F),
+                frame(RESONANCE_CONTACT, EASE_IN, 0, -4.09F, -1.12F, 2.12F, 0, 0),
+                frame(38, EASE_OUT, 0, -7.75F, -2.17F, 2.01F, 0, 0),
+                frame(54, SMOOTHSTEP, -.28F, -7.88F, -2.33F, 2.0F, 0, -.025F),
                 frame(61, EASE_IN, 1, -18, 0, 1.93F, -.13F, -.18F)),
             HELM, track(RESONANCE_END,
                 frame(24, SMOOTHSTEP, 0, 0, 0, -.11F, 0, 0),
@@ -139,6 +158,10 @@ final class PaladinAnimations {
             HEM, track(RESONANCE_END,
                 frame(39, EASE_OUT, 0, 0, 0, .36F, 0, 0),
                 frame(48, SMOOTHSTEP, 0, 0, 0, -.18F, 0, 0))));
+    }
+
+    private static KeyframeTrack<BoneTransform> held(KeyframeTrack.Key<BoneTransform> pose) {
+        return new KeyframeTrack<>(List.of(pose), BoneTransform::blend);
     }
 
     @SafeVarargs

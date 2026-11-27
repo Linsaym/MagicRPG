@@ -75,7 +75,11 @@ record PortalFrame(BlockPos base, Direction.Axis axis) {
         boolean complete = hasBricks(level, route)
             || (route == PortalRoute.GOLDENWOOD && level.dimension().equals(route.dimension())
                 && hasBricks(level, route.arrivalFrameBlock()));
-        return complete && interior().stream().allMatch(pos -> isPortal(level, pos, axis, route));
+        return complete && hasPortalBlocks(level, route);
+    }
+
+    boolean hasPortalBlocks(ServerLevel level, PortalRoute route) {
+        return interior().stream().allMatch(pos -> isPortal(level, pos, axis, route));
     }
 
     void build(ServerLevel level, PortalRoute route) {

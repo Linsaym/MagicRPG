@@ -1,0 +1,7 @@
+{
+  "type": "magicrpg:storm_reefs",
+  "generator": {
+    "type": "magicrpg:storm_reefs_island",
+    "biome": "magicrpg:storm_reefs"
+  }
+}

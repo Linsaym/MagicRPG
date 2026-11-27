@@ -9,6 +9,15 @@
           "name": "magicrpg:amber_heart"
         }
       ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "magicrpg:bow_fragment"
+        }
+      ]
     }
   ]
 }

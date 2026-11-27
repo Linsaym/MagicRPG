@@ -1,10 +1,12 @@
 package io.github.magicrpg.entity;
 
-import io.github.magicrpg.MagicRpg;
 import io.github.magicrpg.boss.BossFight;
 import io.github.magicrpg.boss.BossMob;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,6 +25,8 @@ import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 
 public final class MeadowPaladin extends BossMob {
+    private static final EntityDataAccessor<Boolean> SWORD_PLANTED =
+        SynchedEntityData.defineId(MeadowPaladin.class, EntityDataSerializers.BOOLEAN);
     private static final int LEGACY_MAX_HEALTH = 250;
     private static final int MAX_HEALTH = 500;
 
@@ -47,6 +51,25 @@ public final class MeadowPaladin extends BossMob {
     @Override
     protected BossFight<MeadowPaladin> bossFight() {
         return fight;
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SWORD_PLANTED, false);
+    }
+
+    public boolean hasPlantedSword() {
+        return entityData.get(SWORD_PLANTED);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (level() instanceof ServerLevel) {
+            entityData.set(SWORD_PLANTED, isAlive() && onGround()
+                && (isNoAi() || getTarget() == null && isAtPost()));
+        }
     }
 
     public void guard(BlockPos pos) {
@@ -125,7 +148,7 @@ public final class MeadowPaladin extends BossMob {
                 getNavigation().stop();
             }
             face(yawTo(target));
-        } else if (post.distToCenterSqr(getX(), getY() + .5, getZ()) > .36) {
+        } else if (!isAtPost()) {
             if (tickCount % 10 == 0) {
                 getNavigation().moveTo(post.getX() + .5, post.getY(), post.getZ() + .5, .9);
             }
@@ -133,6 +156,10 @@ public final class MeadowPaladin extends BossMob {
             getNavigation().stop();
             face(0);
         }
+    }
+
+    private boolean isAtPost() {
+        return post != null && post.distToCenterSqr(getX(), getY() + .5, getZ()) <= .36;
     }
 
     private @Nullable ServerPlayer findTarget(ServerLevel level) {

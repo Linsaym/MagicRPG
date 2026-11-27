@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "axis=x": { "model": "magicrpg:block/storm_reefs_portal" },
+    "axis=z": { "model": "magicrpg:block/storm_reefs_portal", "y": 90 }
+  }
+}

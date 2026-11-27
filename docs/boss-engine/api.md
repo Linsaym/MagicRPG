@@ -17,6 +17,12 @@
 | `BossAction.all(BossAction<B>... actions)`, `BossAction.when(Predicate<BossContext<B>> condition, BossAction<B> action)` | Последовательное исполнение и условное действие. Прерывание останавливает оставшиеся действия. |
 | `BossFight<B>.interrupt()` | Явно прерывает текущую способность. Возвращает `true`, если она была активна. |
 
+## Возвращение после смерти
+
+- `protected int BossMob.respawnDelayTicks()` задаёт срок возвращения. По умолчанию 12 000 тиков. Переопредели с `0`, чтобы отключить возвращение для конкретного босса.
+- `protected Vec3 BossMob.legacyRespawnPosition()` восстанавливает исходную точку сущности из старого сохранения. По умолчанию использует пост из `Mob.getHomePosition()`, а при его отсутствии текущую позицию.
+- `BossRespawns.isPending(ServerLevel level, EntityType<? extends BossMob> type, BlockPos pos)` проверяет ожидающее возвращение в точке. Используй при ручном призыве в ту же точку.
+
 ## Контекст исполнения
 
 - `B boss()`, `ServerLevel level()`, `Optional<LivingEntity> target()`, `boolean isHostile(LivingEntity entity)`.

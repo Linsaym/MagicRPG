@@ -3,23 +3,40 @@ package io.github.magicrpg.client;
 import io.github.magicrpg.Goldenwood;
 import io.github.magicrpg.IronWastelands;
 import io.github.magicrpg.MagicRpg;
+import io.github.magicrpg.StormReefs;
+import io.github.magicrpg.network.ArrowRainPayload;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.IronGolemRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.entity.WanderingTraderRenderer;
 import net.minecraft.client.renderer.entity.state.VillagerRenderState;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 @EventBusSubscriber(modid = MagicRpg.ID, value = Dist.CLIENT)
 public final class ClientRegistration {
     private ClientRegistration() {}
+
+    @SubscribeEvent
+    public static void callArrowRain(InputEvent.InteractionKeyMappingTriggered event) {
+        var player = Minecraft.getInstance().player;
+        if (event.isAttack() && event.getHand() == InteractionHand.MAIN_HAND && player != null
+            && player.isAlive() && !player.isSpectator() && player.getMainHandItem().is(Goldenwood.AMBER_BOW.get())) {
+            event.setCanceled(true);
+            event.setSwingHand(true);
+            ClientPacketDistributor.sendToServer(ArrowRainPayload.INSTANCE);
+        }
+    }
 
     @SubscribeEvent
     public static void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
@@ -29,6 +46,7 @@ public final class ClientRegistration {
         event.registerLayerDefinition(AshHoundModel.LAYER, AshHoundModel::createLayer);
         event.registerLayerDefinition(StarHareModel.LAYER, StarHareModel::createLayer);
         event.registerLayerDefinition(PaladinModel.LAYER, PaladinModel::createLayer);
+        event.registerLayerDefinition(StormPilotModel.LAYER, StormPilotModel::createLayer);
         for (var shape : CitySentryModel.Shape.values()) {
             event.registerLayerDefinition(shape.layer, () -> CitySentryModel.createLayer(shape));
         }
@@ -58,6 +76,7 @@ public final class ClientRegistration {
         event.registerEntityRenderer(MagicRpg.ASH_HOUND.get(), AshHoundRenderer::new);
         event.registerEntityRenderer(MagicRpg.STAR_HARE.get(), StarHareRenderer::new);
         event.registerEntityRenderer(MagicRpg.MEADOW_PALADIN.get(), PaladinRenderer::new);
+        event.registerEntityRenderer(StormReefs.STORM_PILOT.get(), StormPilotRenderer::new);
         event.registerEntityRenderer(MagicRpg.CITY_STONE_GUARD.get(),
             context -> new CitySentryRenderer(context, CitySentryModel.Shape.STONE));
         event.registerEntityRenderer(MagicRpg.HOLLOW_ARMOR.get(),

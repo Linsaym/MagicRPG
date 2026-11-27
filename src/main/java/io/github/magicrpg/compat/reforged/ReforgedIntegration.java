@@ -47,6 +47,7 @@ public final class ReforgedIntegration {
         event.enqueueWork(ReforgedIntegration::registerResearchAndRecipe);
         GoldenwoodMagic.registerAspects();
         IronWastelandsMagic.registerAspects();
+        StormReefsMagic.registerAspects();
         WayfarerMirrorMagic.registerAspects();
         TimeTurnerMagic.registerAspects();
         MeadowEquipmentMagic.registerAspects();
@@ -110,6 +111,7 @@ public final class ReforgedIntegration {
         WayfarerMirrorMagic.registerResearchAndRecipes();
         GoldenwoodMagic.registerResearchAndRecipe();
         IronWastelandsMagic.registerResearch();
+        StormReefsMagic.registerResearchAndRecipe();
     }
 
     static void diary(String key, String icon, String parent, int x, int y, Aspect first, Aspect second,

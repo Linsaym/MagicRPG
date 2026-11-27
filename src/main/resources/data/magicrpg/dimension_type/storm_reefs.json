@@ -1,0 +1,42 @@
+{
+  "ambient_light": 0.0,
+  "attributes": {
+    "minecraft:visual/cloud_height": 145.0,
+    "minecraft:visual/cloud_color": "#c07a92a2",
+    "minecraft:visual/sun_angle": 79.0,
+    "minecraft:visual/moon_angle": 259.0,
+    "minecraft:visual/star_brightness": 0.15,
+    "minecraft:visual/sunrise_sunset_color": "#526facc9",
+    "minecraft:visual/sky_light_color": "#a4c5d6",
+    "minecraft:visual/sky_light_factor": 0.82,
+    "minecraft:visual/ambient_light_color": "#213644",
+    "minecraft:gameplay/sky_light_level": 0.7,
+    "minecraft:gameplay/monsters_burn": false,
+    "minecraft:visual/fog_start_distance": 48.0,
+    "minecraft:visual/fog_end_distance": 176.0,
+    "minecraft:gameplay/bed_rule": {
+      "can_set_spawn": "never",
+      "can_sleep": "never",
+      "error_message": {
+        "translate": "block.minecraft.bed.no_sleep"
+      }
+    }
+  },
+  "coordinate_scale": 1.0,
+  "default_clock": "minecraft:overworld",
+  "has_ceiling": false,
+  "has_ender_dragon_fight": false,
+  "has_skylight": true,
+  "height": 192,
+  "infiniburn": "#minecraft:infiniburn_overworld",
+  "logical_height": 192,
+  "min_y": 0,
+  "monster_spawn_block_light_limit": 0,
+  "monster_spawn_light_level": {
+    "type": "minecraft:uniform",
+    "max_inclusive": 7,
+    "min_inclusive": 0
+  },
+  "timelines": "#minecraft:universal",
+  "has_fixed_time": true
+}

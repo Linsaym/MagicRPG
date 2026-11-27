@@ -3,6 +3,7 @@ package io.github.magicrpg.world;
 import io.github.magicrpg.Goldenwood;
 import io.github.magicrpg.IronWastelands;
 import io.github.magicrpg.MagicRpg;
+import io.github.magicrpg.StormReefs;
 import io.github.magicrpg.compat.reforged.ReforgedIntegration;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,7 +19,8 @@ public enum PortalRoute {
     MEADOWS("lilac_meadows", "portal_frame", "meadow_no_space", new BlockPos(0, 113, 49)),
     GOLDENWOOD("goldenwood", "goldenwood_frame", "goldenwood_no_space", null),
     IRON_WASTELANDS("iron_wastelands", "iron_wastelands_frame", "iron_wastelands_no_space",
-        new BlockPos(0, 105, 56));
+        new BlockPos(0, 105, 56)),
+    STORM_REEFS("storm_reefs", "storm_reefs_frame", "storm_reefs_no_space", new BlockPos(0, 106, 64));
 
     private static final String MESSAGE_PREFIX = "item.magicrpg.charred_fang.";
     private final ResourceKey<Level> dimension;
@@ -54,6 +56,7 @@ public enum PortalRoute {
             case MEADOWS -> ReforgedIntegration.portalBrick();
             case GOLDENWOOD -> ReforgedIntegration.amberBlock();
             case IRON_WASTELANDS -> Blocks.IRON_BLOCK;
+            case STORM_REEFS -> Blocks.DARK_PRISMARINE;
         };
     }
 
@@ -66,6 +69,7 @@ public enum PortalRoute {
             case MEADOWS -> MagicRpg.MEADOW_PORTAL.get();
             case GOLDENWOOD -> Goldenwood.PORTAL.get();
             case IRON_WASTELANDS -> IronWastelands.PORTAL.get();
+            case STORM_REEFS -> StormReefs.PORTAL.get();
         };
     }
 
@@ -74,6 +78,7 @@ public enum PortalRoute {
             case MEADOWS -> MagicRpg.WHITE_STONE.get();
             case GOLDENWOOD -> Goldenwood.HONEY_BRICKS.get();
             case IRON_WASTELANDS -> IronWastelands.METAL_PLATES.get();
+            case STORM_REEFS -> Blocks.PRISMARINE_BRICKS;
         };
     }
 
@@ -82,6 +87,7 @@ public enum PortalRoute {
             case MEADOWS -> state.is(MagicRpg.LILAC_GRASS.get()) || state.is(MagicRpg.WHITE_STONE.get());
             case GOLDENWOOD -> state.is(Goldenwood.AMBER_GRASS.get()) || state.is(Goldenwood.HONEYSTONE.get());
             case IRON_WASTELANDS -> state.is(IronWastelands.ASHEN_SOIL.get()) || state.is(IronWastelands.METAL_PLATES.get());
+            case STORM_REEFS -> state.is(Blocks.PRISMARINE_BRICKS) || state.is(Blocks.POLISHED_DEEPSLATE);
         };
     }
 
