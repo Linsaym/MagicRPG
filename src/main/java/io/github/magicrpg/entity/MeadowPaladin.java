@@ -22,6 +22,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 public final class MeadowPaladin extends BossMob {
@@ -130,9 +131,14 @@ public final class MeadowPaladin extends BossMob {
             guard(blockPosition());
         }
 
+        var previousTarget = getTarget();
         var target = findTarget(level);
-        if (target != getTarget()) {
+        if (target != previousTarget) {
             setTarget(target);
+            if (target == null) {
+                getMoveControl().setWait();
+                brace();
+            }
         }
         bossBar.setProgress(getHealth() / getMaxHealth());
         bossBar.setVisible(target != null);
@@ -149,12 +155,23 @@ public final class MeadowPaladin extends BossMob {
             }
             face(yawTo(target));
         } else if (!isAtPost()) {
-            if (tickCount % 10 == 0) {
-                getNavigation().moveTo(post.getX() + .5, post.getY(), post.getZ() + .5, .9);
-            }
+            returnToPost(level, Vec3.atBottomCenterOf(post));
         } else {
-            getNavigation().stop();
+            getMoveControl().setWait();
+            brace();
             face(0);
+        }
+    }
+
+    private void returnToPost(ServerLevel level, Vec3 home) {
+        Vec3 offset = home.subtract(position());
+        // Ground navigation can finish outside the stance radius for a mob this wide.
+        if (onGround() && offset.lengthSqr() <= 9
+            && level.noBlockCollision(this, getBoundingBox().expandTowards(offset))) {
+            getNavigation().stop();
+            getMoveControl().setWantedPosition(home.x, home.y, home.z, .9);
+        } else if (tickCount % 10 == 0) {
+            getNavigation().moveTo(home.x, home.y, home.z, 0, .9);
         }
     }
 
@@ -180,7 +197,7 @@ public final class MeadowPaladin extends BossMob {
     }
 
     boolean inGuardZone(ServerPlayer player, boolean starting) {
-        if (!player.isAlive() || player.isSpectator() || player.isCreative() || post == null) {
+        if (!player.isAlive() || player.level() != level() || player.isSpectator() || player.isCreative() || post == null) {
             return false;
         }
         double x = player.getX() - post.getX() - .5;

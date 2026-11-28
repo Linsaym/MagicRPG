@@ -43,14 +43,17 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.sounds.AmbientLeavesBlockSoundPlayer;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -120,6 +123,12 @@ public final class MagicRpg {
     public static final DeferredBlock<LinkedPortalBlock> MEADOW_PORTAL = BLOCKS.registerBlock("meadow_portal",
         properties -> new LinkedPortalBlock(properties, PortalRoute.MEADOWS), properties -> properties.noCollision().noOcclusion().instabreak()
             .noLootTable().lightLevel(state -> 10));
+    public static final DeferredBlock<DoorBlock> SILVERWOOD_DOOR = BLOCKS.registerBlock("silverwood_door",
+        properties -> new DoorBlock(BlockSetType.BIRCH, properties), properties -> properties
+            .mapColor(MapColor.TERRACOTTA_WHITE).strength(3).noOcclusion().ignitedByLava());
+    public static final DeferredBlock<DoorBlock> GREATWOOD_DOOR = BLOCKS.registerBlock("greatwood_door",
+        properties -> new DoorBlock(BlockSetType.DARK_OAK, properties), properties -> properties
+            .mapColor(MapColor.COLOR_BROWN).strength(3).noOcclusion().ignitedByLava());
     public static final DeferredItem<BlockItem> WHITE_STONE_ITEM = ITEMS.registerSimpleBlockItem(WHITE_STONE);
     public static final DeferredItem<BlockItem> LILAC_GRASS_ITEM = ITEMS.registerSimpleBlockItem(LILAC_GRASS);
     public static final DeferredItem<BlockItem> MEADOW_PENNANT_ITEM = ITEMS.registerSimpleBlockItem(MEADOW_PENNANT);
@@ -127,6 +136,8 @@ public final class MagicRpg {
     public static final DeferredItem<BlockItem> LILAC_LOG_ITEM = ITEMS.registerSimpleBlockItem(LILAC_LOG);
     public static final DeferredItem<BlockItem> LILAC_LEAVES_ITEM = ITEMS.registerSimpleBlockItem(LILAC_LEAVES);
     public static final DeferredItem<BlockItem> LILAC_SAPLING_ITEM = ITEMS.registerSimpleBlockItem(LILAC_SAPLING);
+    public static final DeferredItem<BlockItem> SILVERWOOD_DOOR_ITEM = ITEMS.registerSimpleBlockItem(SILVERWOOD_DOOR);
+    public static final DeferredItem<BlockItem> GREATWOOD_DOOR_ITEM = ITEMS.registerSimpleBlockItem(GREATWOOD_DOOR);
 
     private static final DeferredHolder<CreativeModeTab, CreativeModeTab> CREATIVE_TAB = CREATIVE_TABS.register(
         "magicrpg", () -> CreativeModeTab.builder()

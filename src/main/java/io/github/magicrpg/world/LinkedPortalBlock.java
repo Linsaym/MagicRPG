@@ -82,12 +82,8 @@ public final class LinkedPortalBlock extends Block implements Portal {
         if (frame.hasPortalBlocks(level, route)) {
             return Activation.ALREADY_OPEN;
         }
-        var opening = frame.interior();
-        if (opening.stream().anyMatch(pos -> !level.mayInteract(player, pos))) {
+        if (frame.interior().stream().anyMatch(pos -> !level.mayInteract(player, pos))) {
             return Activation.PROTECTED;
-        }
-        if (opening.stream().anyMatch(pos -> !level.isEmptyBlock(pos))) {
-            return Activation.OPENING_BLOCKED;
         }
         if (!returning) {
             var target = level.getServer().getLevel(route.dimension());

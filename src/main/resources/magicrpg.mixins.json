@@ -5,6 +5,8 @@
     "ResearchBackgroundMixin",
     "ResearchDisplayPageAccessor",
     "ResearchIllustrationMixin",
+    "ResearchPageTooltipMixin",
+    "ResearchTableTooltipMixin",
     "RunicMatrixGlowMixin"
   ],
   "injectors": {

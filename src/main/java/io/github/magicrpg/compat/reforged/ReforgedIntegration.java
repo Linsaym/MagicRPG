@@ -13,6 +13,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import thaumcraft.aspect.Aspect;
 import thaumcraft.aspect.AspectList;
 import thaumcraft.aspect.AspectSync;
+import thaumcraft.crafting.CraftingRecipeRef;
 import thaumcraft.crafting.ShapelessArcaneRecipe;
 import thaumcraft.crafting.TcIngredient;
 import thaumcraft.crafting.TcRecipes;
@@ -31,6 +32,7 @@ public final class ReforgedIntegration {
     static final String FANG_RESEARCH = "MAGICRPG_CHARRED_FANG";
     static final String MEADOWS_RESEARCH = "MAGICRPG_LILAC_MEADOWS";
     private static final String INVENTORY_SCANNING_RESEARCH = "MAGICRPG_INVENTORY_SCANNING";
+    private static final String WOODEN_DOORS_RESEARCH = "MAGICRPG_WOODEN_DOORS";
     private static final String RECIPE = "magicrpg:ash_hound_seal";
 
     private ReforgedIntegration() {}
@@ -62,6 +64,10 @@ public final class ReforgedIntegration {
             registry.register(MagicRpg.LILAC_LOG_ITEM.get(), new AspectList().add(Aspect.TREE, 3));
             registry.register(MagicRpg.LILAC_LEAVES_ITEM.get(), new AspectList().add(Aspect.PLANT, 2));
             registry.register(MagicRpg.LILAC_SAPLING_ITEM.get(), new AspectList().add(Aspect.PLANT, 2).add(Aspect.LIFE, 1));
+            registry.register(MagicRpg.SILVERWOOD_DOOR_ITEM.get(), new AspectList()
+                .add(Aspect.TREE, 3).add(Aspect.MECHANISM, 1).add(Aspect.MAGIC, 1));
+            registry.register(MagicRpg.GREATWOOD_DOOR_ITEM.get(), new AspectList()
+                .add(Aspect.TREE, 3).add(Aspect.MECHANISM, 1));
             registry.register(MagicRpg.CHALK_HEART.get(), new AspectList().add(Aspect.EARTH, 4).add(Aspect.MAGIC, 2));
             registry.register(MagicRpg.ECHO_RIVET.get(), new AspectList().add(Aspect.METAL, 3).add(Aspect.MOTION, 2));
             registry.register(MagicRpg.OATH_CORE.get(), new AspectList().add(Aspect.MAGIC, 8).add(Aspect.ORDER, 6));
@@ -88,6 +94,15 @@ public final class ReforgedIntegration {
             .setAutoUnlock()
             .setPages(page(INVENTORY_SCANNING_RESEARCH, 1))
             .registerResearchItem();
+
+        var silverwoodDoor = MagicRpg.SILVERWOOD_DOOR.getId();
+        var greatwoodDoor = MagicRpg.GREATWOOD_DOOR.getId();
+        for (var id : List.of(silverwoodDoor, greatwoodDoor)) {
+            TcRecipes.register(new CraftingRecipeRef(id.toString(), WOODEN_DOORS_RESEARCH, id, TcStack.of(id.toString(), 3)));
+        }
+        diary(WOODEN_DOORS_RESEARCH, silverwoodDoor.toString(), INVENTORY_SCANNING_RESEARCH, 0, 2,
+            Aspect.TREE, Aspect.MECHANISM, page(WOODEN_DOORS_RESEARCH, 1),
+            ResearchPage.crafting(silverwoodDoor.toString(), greatwoodDoor.toString()));
 
         new ResearchItem(ASH_HOUND_RESEARCH, BEASTS_CATEGORY, new AspectList().add(Aspect.FIRE, 3).add(Aspect.ENTROPY, 3),
             2, 0, 1, seal)

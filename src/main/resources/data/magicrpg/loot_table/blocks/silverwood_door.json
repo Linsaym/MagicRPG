@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "condition": {
+            "type": "minecraft:match_block",
+            "blocks": "magicrpg:silverwood_door",
+            "state": {
+              "half": "lower"
+            }
+          },
+          "name": "magicrpg:silverwood_door"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "magicrpg:blocks/silverwood_door"
+}

@@ -160,8 +160,7 @@ final class PortalLinks extends SavedData {
                 }
             }
             for (var pos : frame.interior()) {
-                var state = level.getBlockState(pos);
-                if (!level.getWorldBorder().isWithinBounds(pos) || !(state.isAir() || state.is(route.portal()))) {
+                if (!level.getWorldBorder().isWithinBounds(pos)) {
                     return null;
                 }
             }
@@ -240,6 +239,7 @@ final class PortalLinks extends SavedData {
         var base = frame.base();
         var border = restore ? frame.border() : List.<BlockPos>of();
         var interior = restore ? frame.interior() : List.<BlockPos>of();
+        boolean completeFrame = restore && (frame.hasBricks(level, route) || frame.hasBricks(level, route.arrivalFrameBlock()));
         for (var pos : arrivalSpace(frame)) {
             if (!level.isInsideBuildHeight(pos) || !level.getWorldBorder().isWithinBounds(pos)) {
                 return false;
@@ -252,7 +252,7 @@ final class PortalLinks extends SavedData {
                     continue;
                 }
             } else if (state.isAir() || route.canClear(state)
-                || (restore && state.is(route.portal()) && interior.contains(pos))) {
+                || (interior.contains(pos) && (completeFrame || state.is(route.portal())))) {
                 continue;
             }
             if (restore && border.contains(pos)

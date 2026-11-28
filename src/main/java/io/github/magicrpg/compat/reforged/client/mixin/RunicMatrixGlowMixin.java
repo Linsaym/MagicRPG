@@ -7,10 +7,18 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import thaumcraft.client.geom.QuadSink;
 import thaumcraft.client.render.RunicMatrixRendering;
 
 @Mixin(value = RunicMatrixRendering.class, remap = false)
 abstract class RunicMatrixGlowMixin {
+    @Redirect(method = "lambda$submit$0", at = @At(value = "INVOKE",
+        target = "Lthaumcraft/client/geom/InfusionHaloGeometry;render(Lthaumcraft/client/geom/QuadSink;IZFFI)V"))
+    private static void magicrpg$skipInfusionRays(QuadSink sink, int craftCount, boolean large,
+                                                float u, float v, int light) {
+        // The halo renderer draws the white rays during infusion.
+    }
+
     @Redirect(method = "submit", at = @At(value = "INVOKE", ordinal = 6,
         target = "Lnet/minecraft/util/Mth;sin(D)F"))
     private static float magicrpg$slowGlowWave(double originalPhase, SubmitNodeCollector collector, PoseStack poseStack,

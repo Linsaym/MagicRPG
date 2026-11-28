@@ -67,7 +67,7 @@ record PortalFrame(BlockPos base, Direction.Axis axis) {
         return hasBricks(level, route.frameBlock());
     }
 
-    private boolean hasBricks(ServerLevel level, Block brick) {
+    boolean hasBricks(ServerLevel level, Block brick) {
         return border().stream().allMatch(pos -> level.getBlockState(pos).is(brick));
     }
 
